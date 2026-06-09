@@ -14,10 +14,23 @@ const firebaseAdminConfig = {
   clientX509CertUrl: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL || '')}`,
 }
 
+type FirebaseAdminConfig = {
+  type: string
+  projectId?: string
+  privateKeyId?: string
+  privateKey?: string
+  clientEmail?: string
+  clientId?: string
+  authUri: string
+  tokenUri: string
+  authProviderX509CertUrl: string
+  clientX509CertUrl: string
+}
+
 // Initialize Firebase Admin (only once)
 if (!getApps().length) {
   initializeApp({
-    credential: cert(firebaseAdminConfig as any),
+    credential: cert(firebaseAdminConfig as FirebaseAdminConfig),
   })
 }
 

@@ -10,15 +10,14 @@ export default function TodoList() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    async function loadTodos() {
+      setIsLoading(true)
+      const allTodos = await getTodos()
+      setTodos(allTodos.sort((a, b) => b.createdAt - a.createdAt))
+      setIsLoading(false)
+    }
     loadTodos()
   }, [])
-
-  async function loadTodos() {
-    setIsLoading(true)
-    const allTodos = await getTodos()
-    setTodos(allTodos.sort((a, b) => b.createdAt - a.createdAt))
-    setIsLoading(false)
-  }
 
   async function handleAddTodo(e: React.FormEvent) {
     e.preventDefault()
@@ -47,7 +46,7 @@ export default function TodoList() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <div className="text-gray-600">Loading tasks...</div>
       </div>
     )
@@ -56,7 +55,7 @@ export default function TodoList() {
   const completedCount = todos.filter(t => t.completed).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -112,7 +111,7 @@ export default function TodoList() {
                 >
                   {todo.text}
                 </span>
-                {!todo.synced && (
+                {todo.synced !== 'synced' && (
                   <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
                     Pending
                   </span>

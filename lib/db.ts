@@ -27,7 +27,7 @@ let dbInstance: IDBPDatabase | null = null
 export async function getDB() {
   if (dbInstance) return dbInstance
   dbInstance = await openDB('tasks-pwa-db', 2, {
-    upgrade(db, oldVersion, newVersion) {
+    upgrade(db) {
       // Create or update tasks store
       if (!db.objectStoreNames.contains('tasks')) {
         const taskStore = db.createObjectStore('tasks', { keyPath: 'id' })
@@ -207,10 +207,17 @@ export async function addToSyncQueue(taskId: string, operation: 'create' | 'upda
   })
 }
 
+interface SyncQueueEntry {
+  id?: number
+  taskId: string
+  operation: 'create' | 'update' | 'delete'
+  timestamp: number
+}
+
 /**
  * Get sync queue
  */
-export async function getSyncQueue(): Promise<any[]> {
+export async function getSyncQueue(): Promise<SyncQueueEntry[]> {
   const db = await getDB()
   return db.getAll('sync-queue')
 }

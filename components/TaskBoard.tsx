@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
 import { syncTodos, setupAutoSync } from '@/lib/sync'
 import Clock from './Clock'
@@ -20,27 +20,28 @@ export default function TaskBoard() {
   const [menuOpenTask, setMenuOpenTask] = useState<Task | null>(null)
   const menuPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
-  const loadTasks = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const timed = await getTimedTasks()
-      const oneTime = await getOneTimeTasks()
-      setTimedTasks(timed)
-      setOneTimeTasks(oneTime)
-    } catch (error) {
-      console.error('Error loading tasks:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
+    async function loadTasks() {
+      setIsLoading(true)
+      try {
+        const timed = await getTimedTasks()
+        const oneTime = await getOneTimeTasks()
+        setTimedTasks(timed)
+        setOneTimeTasks(oneTime)
+      } catch (error) {
+        console.error('Error loading tasks:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     loadTasks()
     // Set up auto-sync on mount
     setupAutoSync()
-  }, [loadTasks])
+  }, [])
 
-  async function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+  function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+    (async () => {
     const newTask = await addTask(text, repeatability, scheduledTime)
     
     if (repeatability === 'never') {
@@ -51,9 +52,11 @@ export default function TaskBoard() {
     
     setIsModalOpen(false)
     syncTodos()
+    })()
   }
 
-  async function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+  function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+    (async () => {
     if (!selectedTask) return
     
     const updates = {
@@ -84,9 +87,11 @@ export default function TaskBoard() {
     setSelectedTask(null)
     setIsModalOpen(false)
     syncTodos()
+    })()
   }
 
-  async function handleToggleDone(task: Task) {
+  function handleToggleDone(task: Task) {
+    (async () => {
     await updateTodo(task.id, { completed: !task.completed })
     
     if (task.repeatability === 'never') {
@@ -97,13 +102,16 @@ export default function TaskBoard() {
     
     setMenuOpenTask(null)
     syncTodos()
+    })()
   }
 
-  async function handleDeleteTask(taskId: string) {
+  function handleDeleteTask(taskId: string) {
+    (async () => {
     await deleteTodo(taskId)
     setTimedTasks(timedTasks.filter(t => t.id !== taskId))
     setOneTimeTasks(oneTimeTasks.filter(t => t.id !== taskId))
     setMenuOpenTask(null)
+    })()
   }
 
   function handleTaskMenuOpen(task: Task, buttonElement: HTMLElement) {

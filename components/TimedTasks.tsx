@@ -49,7 +49,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 flex-shrink-0">
+      <div className="bg-linear-to-r from-purple-500 to-purple-600 text-white p-4 shrink-0">
         <h2 className="text-xl font-bold">Scheduled Tasks</h2>
         <p className="text-purple-100 text-sm">Current time: {currentTime}</p>
       </div>
@@ -65,7 +65,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
           </div>
         ) : (
           <>
-            {sortedTasks.map((task, index) => {
+            {sortedTasks.map((task) => {
               const isCurrentTime = task.scheduledTime === currentTime
               const isPast = task.scheduledTime && task.scheduledTime < currentTime
 
@@ -83,7 +83,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                 >
                   <div className="flex items-start gap-3">
                     {/* Time Badge */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
                       isCurrentTime
                         ? 'bg-yellow-500 text-white'
                         : 'bg-purple-200 text-purple-700'
@@ -94,7 +94,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                     {/* Task Content */}
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-sm font-medium break-words ${
+                        className={`text-sm font-medium wrap-break-word ${
                           task.completed
                             ? 'line-through text-gray-400'
                             : 'text-gray-800'
@@ -111,7 +111,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                     {/* Action Button */}
                     <button
                       onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-                      className="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1"
+                      className="shrink-0 text-gray-400 hover:text-gray-600 p-1"
                       title="Task options"
                     >
                       ⋮

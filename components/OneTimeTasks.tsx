@@ -14,7 +14,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 flex-shrink-0">
+      <div className="bg-linear-to-r from-green-500 to-green-600 text-white p-4 shrink-0">
         <h2 className="text-xl font-bold">One-Time Tasks</h2>
         <p className="text-green-100 text-sm">{incompleteTasks.length} pending</p>
       </div>
@@ -44,13 +44,13 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                     >
                       <div className="flex items-start gap-3">
                         {/* Checkbox Indicator */}
-                        <div className="flex-shrink-0 mt-0.5">
+                        <div className="shrink-0 mt-0.5">
                           <div className="w-4 h-4 border-2 border-green-500 rounded-sm"></div>
                         </div>
 
                         {/* Task Content */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 break-words">
+                          <p className="text-sm font-medium text-gray-800 wrap-break-word">
                             {task.text}
                           </p>
                           {!task.synced && (
@@ -61,7 +61,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                         {/* Action Button */}
                         <button
                           onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-                          className="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1"
+                          className="shrink-0 text-gray-400 hover:text-gray-600 p-1"
                           title="Task options"
                         >
                           ⋮
@@ -87,7 +87,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                     >
                       <div className="flex items-start gap-3">
                         {/* Checkbox Indicator */}
-                        <div className="flex-shrink-0 mt-0.5">
+                        <div className="shrink-0 mt-0.5">
                           <div className="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
                             <span className="text-white text-xs">✓</span>
                           </div>
@@ -95,7 +95,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
 
                         {/* Task Content */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-500 break-words line-through">
+                          <p className="text-sm font-medium text-gray-500 wrap-break-word line-through">
                             {task.text}
                           </p>
                         </div>
@@ -103,7 +103,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                         {/* Action Button */}
                         <button
                           onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-                          className="flex-shrink-0 text-gray-300 hover:text-gray-400 p-1"
+                          className="shrink-0 text-gray-300 hover:text-gray-400 p-1"
                           title="Task options"
                         >
                           ⋮
