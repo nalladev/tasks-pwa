@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
-import { syncTodos } from '@/lib/sync'
+import { syncTodos, setupAutoSync } from '@/lib/sync'
 import Clock from './Clock'
 import TimedTasks from './TimedTasks'
 import OneTimeTasks from './OneTimeTasks'
@@ -22,15 +22,22 @@ export default function TaskBoard() {
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true)
-    const timed = await getTimedTasks()
-    const oneTime = await getOneTimeTasks()
-    setTimedTasks(timed)
-    setOneTimeTasks(oneTime)
-    setIsLoading(false)
+    try {
+      const timed = await getTimedTasks()
+      const oneTime = await getOneTimeTasks()
+      setTimedTasks(timed)
+      setOneTimeTasks(oneTime)
+    } catch (error) {
+      console.error('Error loading tasks:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
   useEffect(() => {
     loadTasks()
+    // Set up auto-sync on mount
+    setupAutoSync()
   }, [loadTasks])
 
   async function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
