@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
 import { syncTodos, setupAutoSync } from '@/lib/sync'
 import Clock from './Clock'
@@ -10,10 +10,19 @@ import TaskModal from './TaskModal'
 import TaskActionMenu from './TaskActionMenu'
 import SettingsPopup from './SettingsPopup'
 
+const subscribeToHydration = () => () => {}
+const getClientHydrationSnapshot = () => true
+const getServerHydrationSnapshot = () => false
+
 export default function TaskBoard() {
   const [timedTasks, setTimedTasks] = useState<Task[]>([])
   const [oneTimeTasks, setOneTimeTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
+  )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -35,10 +44,12 @@ export default function TaskBoard() {
       }
     }
 
-    loadTasks()
-    // Set up auto-sync on mount
-    setupAutoSync()
-  }, [])
+    if (isHydrated) {
+      loadTasks()
+      // Set up auto-sync on mount
+      setupAutoSync()
+    }
+  }, [isHydrated])
 
   function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
     (async () => {
@@ -123,12 +134,19 @@ export default function TaskBoard() {
     setMenuOpenTask(task)
   }
 
+  // Prevent hydration mismatch by showing empty state until hydrated
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6" />
+    )
+  }
+
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
-          <div className="text-gray-600">Loading tasks...</div>
-        </div>
-      )
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
+        <div className="text-gray-600">Loading tasks...</div>
+      </div>
+    )
   }
 
   return (
