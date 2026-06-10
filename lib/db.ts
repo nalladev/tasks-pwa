@@ -138,6 +138,7 @@ export async function deleteTodo(id: string): Promise<void> {
   const deleted: Task = {
     ...task,
     deletedAt: Date.now(),
+    lastModifiedAt: Date.now(),
     synced: 'pending',
   }
   await db.put('tasks', deleted)
