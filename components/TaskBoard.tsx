@@ -179,25 +179,25 @@ export default function TaskBoard() {
   // Prevent hydration mismatch by showing empty state until hydrated
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6 flex flex-col" />
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 flex flex-col" />
     )
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
-        <div className="text-gray-600">Loading tasks...</div>
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-gray-600 dark:text-gray-400">Loading tasks...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6 flex flex-col">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 flex flex-col">
       {/* Header with Settings */}
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-xl md:text-4xl font-bold text-gray-800">Tasks Board</h1>
-          <p className="text-gray-600 mt-1">Organize your day</p>
+          <h1 className="text-xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">Tasks Board</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Organize your day</p>
         </div>
 
         <div className="flex gap-2">
@@ -210,7 +210,7 @@ export default function TaskBoard() {
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="px-4 py-3 text-gray-600 hover:bg-gray-200 rounded-lg transition"
+            className="px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
             title="Settings"
           >
             <Icon name="settings" className="w-6 h-6" />

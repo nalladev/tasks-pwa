@@ -21,19 +21,19 @@ export default function TaskItem({ task, onTaskMenuOpen, className, footer, chil
         <div className="flex-1 min-w-0">
           <p
             className={`text-sm font-medium wrap-break-word ${
-              task.completed ? 'line-through text-gray-400' : 'text-gray-800'
+              task.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'
             }`}
           >
             {task.text}
           </p>
           {footer && (
-            <div className="text-xs text-gray-500 mt-1 capitalize">{footer}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">{footer}</div>
           )}
         </div>
 
         <button
           onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-          className="shrink-0 text-gray-400 hover:text-gray-600 text-xl p-1"
+          className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl p-1"
           title="Task options"
         >
           <Icon name="ellipsis" className="w-5 h-5" />

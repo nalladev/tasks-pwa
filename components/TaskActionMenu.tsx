@@ -67,7 +67,7 @@ export default function TaskActionMenu({
       {/* Menu */}
       <div
         ref={menuRef}
-        className="fixed bg-white rounded-lg shadow-xl z-50 py-2 min-w-48"
+        className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 py-2 min-w-48"
         style={computedStyle}
       >
         <button
@@ -75,7 +75,7 @@ export default function TaskActionMenu({
             onEdit()
             onClose()
           }}
-          className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
+          className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
           <Icon name="edit" className="w-4 h-4 inline mr-2 align-text-bottom" />Edit
         </button>
@@ -84,18 +84,18 @@ export default function TaskActionMenu({
             onToggleDone()
             onClose()
           }}
-          className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
+          className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
           <Icon name={task.completed ? 'undo' : 'check'} className="w-4 h-4 inline mr-2 align-text-bottom" />
           {task.completed ? 'Undo' : 'Mark Done'}
         </button>
-        <hr className="my-1" />
+        <hr className="my-1 border-gray-200 dark:border-gray-700" />
         <button
           onClick={() => {
             onDelete()
             onClose()
           }}
-          className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition"
+          className="w-full px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
         >
           <Icon name="trash" className="w-4 h-4 inline mr-2 align-text-bottom" />Delete
         </button>

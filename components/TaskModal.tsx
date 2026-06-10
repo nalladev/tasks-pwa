@@ -36,15 +36,15 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
           {task ? 'Edit Task' : 'New Task'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Task Text */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Task Description
             </label>
             <input
@@ -53,13 +53,13 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               onChange={(e) => setText(e.target.value)}
               placeholder="What needs to be done?"
               autoFocus
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-400"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
           {/* Repeatability */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Repeat
             </label>
             <div className="space-y-2">
@@ -73,7 +73,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                     onChange={(e) => setRepeatability(e.target.value as TaskRepeatability)}
                     className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-gray-700 capitalize">
+                  <span className="text-gray-700 dark:text-gray-300 capitalize">
                     {option === 'never' ? 'One-time' : option}
                   </span>
                 </label>
@@ -84,14 +84,14 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
           {/* Scheduled Time */}
           {repeatability !== 'never' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Time of Day (Optional)
               </label>
               <div className="flex gap-2">
                 <select
                   value={hour12}
                   onChange={(e) => setHour12(Number(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                     <option key={h} value={h}>
@@ -99,11 +99,11 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                     </option>
                   ))}
                 </select>
-                <span className="text-gray-500 self-center">:</span>
+                <span className="text-gray-500 dark:text-gray-400 self-center">:</span>
                 <select
                   value={minute}
                   onChange={(e) => setMinute(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
                 >
                   {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
                     <option key={m} value={m}>
@@ -114,13 +114,13 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value as 'AM' | 'PM')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
                 >
                   <option value="AM">AM</option>
                   <option value="PM">PM</option>
                 </select>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Leave as default to show anytime during the day
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition font-medium"
+              className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium"
             >
               Cancel
             </button>
