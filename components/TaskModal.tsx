@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Task, TaskRepeatability } from '@/lib/db'
+import { Task, TaskRepeatability, TaskCategory } from '@/lib/db'
 import { parseScheduledTime, to24h } from '@/lib/time'
 
 interface TaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (text: string, repeatability: TaskRepeatability, scheduledTime?: string) => void
+  onSave: (text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) => void
   task?: Task
 }
 
@@ -15,6 +15,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
   const initial = parseScheduledTime(task?.scheduledTime || '')
   const [text, setText] = useState(task?.text || '')
   const [repeatability, setRepeatability] = useState<TaskRepeatability>(task?.repeatability || 'never')
+  const [category, setCategory] = useState<TaskCategory | undefined>(task?.category)
   const [hour12, setHour12] = useState(initial.hour12)
   const [minute, setMinute] = useState(initial.minute)
   const [period, setPeriod] = useState<'AM' | 'PM'>(initial.period)
@@ -23,9 +24,10 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
     e.preventDefault()
     if (!text.trim()) return
     const scheduledTime = repeatability !== 'never' ? to24h(hour12, minute, period) : undefined
-    onSave(text.trim(), repeatability, scheduledTime)
+    onSave(text.trim(), repeatability, scheduledTime, category)
     setText('')
     setRepeatability('never')
+    setCategory(undefined)
     const reset = parseScheduledTime('')
     setHour12(reset.hour12)
     setMinute(reset.minute)
@@ -125,6 +127,48 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               </p>
             </div>
           )}
+
+          {/* Category: Indoor / Outdoor */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="category"
+                  value=""
+                  checked={category === undefined}
+                  onChange={() => setCategory(undefined)}
+                  className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">None</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="category"
+                  value="indoor"
+                  checked={category === 'indoor'}
+                  onChange={() => setCategory('indoor')}
+                  className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">Indoor</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="category"
+                  value="outdoor"
+                  checked={category === 'outdoor'}
+                  onChange={() => setCategory('outdoor')}
+                  className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">Outdoor</span>
+              </label>
+            </div>
+          </div>
 
           {/* Buttons */}
           <div className="flex gap-2 pt-4">

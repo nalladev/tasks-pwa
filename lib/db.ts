@@ -2,6 +2,8 @@ import { openDB, IDBPDatabase } from 'idb'
 
 export type TaskRepeatability = 'never' | 'daily' | 'weekly' | 'monthly'
 
+export type TaskCategory = 'indoor' | 'outdoor'
+
 export type SyncStatus = 'synced' | 'pending' | 'failed'
 
 // Backward compatibility
@@ -14,6 +16,8 @@ export interface Task {
   createdAt: number
   repeatability: TaskRepeatability
   scheduledTime?: string
+  category?: TaskCategory
+  priority?: number
   // Sync metadata
   synced: SyncStatus
   lastSyncAt?: number
@@ -51,7 +55,9 @@ export async function getDB() {
 export async function addTask(
   text: string,
   repeatability: TaskRepeatability = 'never',
-  scheduledTime?: string
+  scheduledTime?: string,
+  category?: TaskCategory,
+  priority?: number
 ): Promise<Task> {
   const db = await getDB()
   const now = Date.now()
@@ -63,6 +69,8 @@ export async function addTask(
     lastModifiedAt: now,
     repeatability,
     scheduledTime,
+    category,
+    priority,
     synced: 'pending',
   }
   await db.add('tasks', task)
@@ -71,7 +79,7 @@ export async function addTask(
 
 // Backward compatibility
 export async function addTodo(text: string): Promise<Task> {
-  return addTask(text, 'never')
+  return addTask(text, 'never', undefined, undefined, undefined)
 }
 
 /**
@@ -142,6 +150,23 @@ export async function deleteTodo(id: string): Promise<void> {
     synced: 'pending',
   }
   await db.put('tasks', deleted)
+}
+
+/**
+ * Update a task's priority (for reordering)
+ */
+export async function updateTaskPriority(id: string, priority: number): Promise<void> {
+  const db = await getDB()
+  const task = await db.get('tasks', id)
+  if (!task) return
+
+  const updated: Task = {
+    ...task,
+    priority,
+    lastModifiedAt: Date.now(),
+    synced: 'pending',
+  }
+  await db.put('tasks', updated)
 }
 
 /**

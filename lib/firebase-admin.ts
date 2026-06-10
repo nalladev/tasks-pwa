@@ -35,3 +35,13 @@ if (!getApps().length) {
 }
 
 export const adminDb = getFirestore()
+
+/**
+ * Returns the Firestore collection name for tasks.
+ * Prefixes with "test_" in development to avoid
+ * polluting the production collection.
+ */
+export function tasksCollection() {
+  const prefix = process.env.NODE_ENV === 'development' ? 'test_' : ''
+  return `${prefix}tasks`
+}

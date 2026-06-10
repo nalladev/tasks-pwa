@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, tasksCollection } from '@/lib/firebase-admin'
 import { Task } from '@/lib/db'
 
 interface SyncPayload {
@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
       try {
         if (task.deletedAt) {
           // Soft delete: mark as deleted
-          batch.update(adminDb.collection('tasks').doc(task.id), {
+          batch.update(adminDb.collection(tasksCollection()).doc(task.id), {
             deletedAt: new Date(task.deletedAt),
             lastModifiedAt: new Date(task.lastModifiedAt),
           })
         } else {
           // Create or update
           batch.set(
-            adminDb.collection('tasks').doc(task.id),
+            adminDb.collection(tasksCollection()).doc(task.id),
             {
               text: task.text,
               completed: task.completed,
@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
               lastModifiedAt: new Date(task.lastModifiedAt),
               repeatability: task.repeatability,
               scheduledTime: task.scheduledTime || null,
+              category: task.category || null,
+              priority: task.priority ?? null,
               lastSyncAt: new Date(),
             },
             { merge: true }

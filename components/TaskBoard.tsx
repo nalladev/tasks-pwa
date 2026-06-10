@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useSyncExternalStore } from 'react'
-import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
+import { Task, TaskRepeatability, TaskCategory, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo, updateTaskPriority } from '@/lib/db'
 import { syncTodos, setupAutoSync, pullFromServer } from '@/lib/sync'
 import Clock from './Clock'
 import TimedTasks from './TimedTasks'
@@ -93,9 +93,9 @@ export default function TaskBoard() {
     }
   }, [isHydrated])
 
-  function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+  function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) {
     (async () => {
-    const newTask = await addTask(text, repeatability, scheduledTime)
+    const newTask = await addTask(text, repeatability, scheduledTime, category)
 
     if (repeatability === 'never') {
       setOneTimeTasks([...oneTimeTasks, newTask])
@@ -108,7 +108,7 @@ export default function TaskBoard() {
     })()
   }
 
-  function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
+  function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) {
     (async () => {
     if (!selectedTask) return
 
@@ -116,6 +116,7 @@ export default function TaskBoard() {
       text,
       repeatability,
       scheduledTime: repeatability !== 'never' ? scheduledTime : undefined,
+      category,
     }
 
     await updateTodo(selectedTask.id, updates)
@@ -155,6 +156,40 @@ export default function TaskBoard() {
 
     setMenuOpenTask(null)
     syncTodos()
+    })()
+  }
+
+  function handleReorderTask(taskId: string, direction: 'up' | 'down') {
+    (async () => {
+      // Get the current sorted list of incomplete one-time tasks
+      const allOneTime = await getOneTimeTasks()
+      const incomplete = allOneTime
+        .filter(t => !t.completed)
+        .sort((a, b) => {
+          const pa = a.priority ?? 9999
+          const pb = b.priority ?? 9999
+          if (pa !== pb) return pa - pb
+          return b.createdAt - a.createdAt
+        })
+
+      const idx = incomplete.findIndex(t => t.id === taskId)
+      if (idx === -1) return
+
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+      if (swapIdx < 0 || swapIdx >= incomplete.length) return
+
+      const current = incomplete[idx]
+      const other = incomplete[swapIdx]
+
+      const currentPriority = current.priority ?? idx * 10
+      const otherPriority = other.priority ?? swapIdx * 10
+
+      // Swap priorities
+      await updateTaskPriority(current.id, otherPriority)
+      await updateTaskPriority(other.id, currentPriority)
+
+      await reloadTasks()
+      syncTodos()
     })()
   }
 
@@ -238,6 +273,7 @@ export default function TaskBoard() {
           <OneTimeTasks
             tasks={oneTimeTasks}
             onTaskMenuOpen={handleTaskMenuOpen}
+            onReorder={handleReorderTask}
           />
         </div>
       </div>

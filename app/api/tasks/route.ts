@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, tasksCollection } from '@/lib/firebase-admin'
 import { Task } from '@/lib/db'
 
 export async function GET() {
   try {
-    const snapshot = await adminDb.collection('tasks').get()
+    const snapshot = await adminDb.collection(tasksCollection()).get()
 
     const tasks: Task[] = []
     snapshot.forEach((doc) => {
@@ -20,6 +20,8 @@ export async function GET() {
         lastModifiedAt: lastModifiedAt instanceof Date ? lastModifiedAt.getTime() : Number(lastModifiedAt),
         repeatability: data.repeatability || 'never',
         scheduledTime: data.scheduledTime || undefined,
+        category: data.category || undefined,
+        priority: data.priority ?? undefined,
         synced: 'synced',
         lastSyncAt: data.lastSyncAt,
       }

@@ -6,12 +6,15 @@ import { format12h } from '@/lib/time'
 import TaskItem from './TaskItem'
 import Icon from './Icon'
 
+type FilterMode = 'all' | 'indoor' | 'outdoor'
+
 interface TimedTasksProps {
   tasks: Task[]
   onTaskMenuOpen: (task: Task, buttonElement: HTMLElement) => void
 }
 
 export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
+  const [filter, setFilter] = useState<FilterMode>('all')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentTime, setCurrentTime] = useState<string>('')
 
@@ -37,19 +40,44 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
     return () => clearInterval(interval)
   }, [tasks])
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const timeA = a.scheduledTime || '99:99'
-    const timeB = b.scheduledTime || '99:99'
-    return timeA.localeCompare(timeB)
-  })
+  const sortedTasks = [...tasks]
+    .filter(t => filter === 'all' || t.category === filter)
+    .sort((a, b) => {
+      const timeA = a.scheduledTime || '99:99'
+      const timeB = b.scheduledTime || '99:99'
+      return timeA.localeCompare(timeB)
+    })
 
   const taskForCurrentTime = sortedTasks.find(t => t.scheduledTime === currentTime)
+
+  const filterButtons: { mode: FilterMode; label: string }[] = [
+    { mode: 'all', label: 'All' },
+    { mode: 'indoor', label: 'Indoor' },
+    { mode: 'outdoor', label: 'Outdoor' },
+  ]
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       <div className="bg-linear-to-r from-purple-500 to-purple-600 text-white p-4 shrink-0">
         <h2 className="text-xl font-bold">Scheduled Tasks</h2>
         <p className="text-purple-100 text-sm">Current time: {format12h(currentTime)}</p>
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex gap-1 px-4 pt-3 shrink-0">
+        {filterButtons.map(({ mode, label }) => (
+          <button
+            key={mode}
+            onClick={() => setFilter(mode)}
+            className={`px-3 py-1 text-xs font-medium rounded-full transition ${
+              filter === mode
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div
@@ -71,7 +99,19 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                   key={task.id}
                   task={task}
                   onTaskMenuOpen={onTaskMenuOpen}
-                  footer={<>{task.repeatability}{!task.synced && ' • Pending'}</>}
+                  footer={<>
+                    {task.repeatability}
+                    {task.category && (
+                      <span className={`ml-1 inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                        task.category === 'indoor'
+                          ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                          : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                      }`}>
+                        {task.category}
+                      </span>
+                    )}
+                    {!task.synced && ' • Pending'}
+                  </>}
                   className={`p-4 rounded-lg transition-all ${
                     isCurrentTime
                       ? 'bg-yellow-100 dark:bg-yellow-900/40 border-2 border-yellow-500 shadow-lg scale-105'
