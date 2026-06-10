@@ -9,22 +9,27 @@ export async function GET() {
     const tasks: Task[] = []
     snapshot.forEach((doc) => {
       const data = doc.data()
-      if (!data.deletedAt) {
-        const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date()
-        const lastModifiedAt = data.lastModifiedAt?.toDate?.() || data.lastModifiedAt || new Date()
-        
-        tasks.push({
-          id: doc.id,
-          text: data.text,
-          completed: data.completed,
-          createdAt: createdAt instanceof Date ? createdAt.getTime() : Number(createdAt),
-          lastModifiedAt: lastModifiedAt instanceof Date ? lastModifiedAt.getTime() : Number(lastModifiedAt),
-          repeatability: data.repeatability || 'never',
-          scheduledTime: data.scheduledTime || undefined,
-          synced: 'synced',
-          lastSyncAt: data.lastSyncAt,
-        })
+      const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date()
+      const lastModifiedAt = data.lastModifiedAt?.toDate?.() || data.lastModifiedAt || new Date()
+
+      const task: Task = {
+        id: doc.id,
+        text: data.text,
+        completed: data.completed,
+        createdAt: createdAt instanceof Date ? createdAt.getTime() : Number(createdAt),
+        lastModifiedAt: lastModifiedAt instanceof Date ? lastModifiedAt.getTime() : Number(lastModifiedAt),
+        repeatability: data.repeatability || 'never',
+        scheduledTime: data.scheduledTime || undefined,
+        synced: 'synced',
+        lastSyncAt: data.lastSyncAt,
       }
+
+      if (data.deletedAt) {
+        const deletedAt = data.deletedAt?.toDate?.() || data.deletedAt || new Date()
+        task.deletedAt = deletedAt instanceof Date ? deletedAt.getTime() : Number(deletedAt)
+      }
+
+      tasks.push(task)
     })
 
     return NextResponse.json({ success: true, data: tasks })

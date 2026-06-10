@@ -137,11 +137,16 @@ export async function pullFromServer(): Promise<boolean> {
       const existing = await tx.store.get(serverTask.id)
 
       if (!existing) {
+        if (serverTask.deletedAt) continue
         await tx.store.put({ ...serverTask, synced: 'synced' })
         changed = true
-      } else if (existing.synced === 'synced' && !existing.deletedAt) {
+      } else if (existing.synced === 'synced') {
         if (serverTask.lastModifiedAt > existing.lastModifiedAt) {
-          await tx.store.put({ ...serverTask, synced: 'synced' })
+          if (serverTask.deletedAt) {
+            await tx.store.put({ ...existing, deletedAt: serverTask.deletedAt, synced: 'synced' })
+          } else {
+            await tx.store.put({ ...serverTask, synced: 'synced' })
+          }
           changed = true
         }
       }
