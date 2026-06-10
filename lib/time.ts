@@ -8,7 +8,7 @@ export function format12h(time24?: string): string {
 }
 
 export function to24h(hour12: number, minute: string, period: 'AM' | 'PM'): string {
-  let h24 = period === 'PM' ? (hour12 === 12 ? 12 : hour12 + 12) : (hour12 === 12 ? 0 : hour12)
+  const h24 = period === 'PM' ? (hour12 === 12 ? 12 : hour12 + 12) : (hour12 === 12 ? 0 : hour12)
   return `${String(h24).padStart(2, '0')}:${minute}`
 }
 

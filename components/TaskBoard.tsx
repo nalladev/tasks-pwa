@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
 import { syncTodos, setupAutoSync, pullFromServer } from '@/lib/sync'
 import Clock from './Clock'
@@ -28,7 +28,7 @@ export default function TaskBoard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [menuOpenTask, setMenuOpenTask] = useState<Task | null>(null)
-  const menuPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
   const POLL_INTERVAL = 30000
 
@@ -67,8 +67,6 @@ export default function TaskBoard() {
   useEffect(() => {
     if (!isHydrated) return
 
-    let intervalId: ReturnType<typeof setInterval>
-
     async function poll() {
       if (!navigator.onLine) return
       const changed = await pullFromServer()
@@ -81,7 +79,7 @@ export default function TaskBoard() {
       if (document.visibilityState === 'visible') poll()
     }
 
-    intervalId = setInterval(poll, POLL_INTERVAL)
+    const intervalId = setInterval(poll, POLL_INTERVAL)
 
     window.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('focus', poll)
@@ -171,10 +169,10 @@ export default function TaskBoard() {
 
   function handleTaskMenuOpen(task: Task, buttonElement: HTMLElement) {
     const rect = buttonElement.getBoundingClientRect()
-    menuPositionRef.current = {
+    setMenuPosition({
       x: rect.right,
       y: rect.top,
-    }
+    })
     setMenuOpenTask(task)
   }
 
@@ -265,7 +263,7 @@ export default function TaskBoard() {
       <TaskActionMenu
         isOpen={!!menuOpenTask}
         task={menuOpenTask || ({} as Task)}
-        position={menuPositionRef.current}
+        position={menuPosition}
         onEdit={() => {
           if (menuOpenTask) {
             setSelectedTask(menuOpenTask)
