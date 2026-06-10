@@ -9,6 +9,7 @@ import OneTimeTasks from './OneTimeTasks'
 import TaskModal from './TaskModal'
 import TaskActionMenu from './TaskActionMenu'
 import SettingsPopup from './SettingsPopup'
+import Icon from './Icon'
 
 const subscribeToHydration = () => () => {}
 const getClientHydrationSnapshot = () => true
@@ -54,13 +55,13 @@ export default function TaskBoard() {
   function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
     (async () => {
     const newTask = await addTask(text, repeatability, scheduledTime)
-    
+
     if (repeatability === 'never') {
       setOneTimeTasks([...oneTimeTasks, newTask])
     } else {
       setTimedTasks([...timedTasks, newTask])
     }
-    
+
     setIsModalOpen(false)
     syncTodos()
     })()
@@ -69,15 +70,15 @@ export default function TaskBoard() {
   function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string) {
     (async () => {
     if (!selectedTask) return
-    
+
     const updates = {
       text,
       repeatability,
       scheduledTime: repeatability !== 'never' ? scheduledTime : undefined,
     }
-    
+
     await updateTodo(selectedTask.id, updates)
-    
+
     // Update local state
     if (selectedTask.repeatability === 'never' && repeatability === 'never') {
       // Stays in one-time
@@ -94,7 +95,7 @@ export default function TaskBoard() {
       setOneTimeTasks(oneTimeTasks.filter(t => t.id !== selectedTask.id))
       setTimedTasks([...timedTasks, { ...selectedTask, ...updates }])
     }
-    
+
     setSelectedTask(null)
     setIsModalOpen(false)
     syncTodos()
@@ -104,13 +105,13 @@ export default function TaskBoard() {
   function handleToggleDone(task: Task) {
     (async () => {
     await updateTodo(task.id, { completed: !task.completed })
-    
+
     if (task.repeatability === 'never') {
       setOneTimeTasks(oneTimeTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))
     } else {
       setTimedTasks(timedTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))
     }
-    
+
     setMenuOpenTask(null)
     syncTodos()
     })()
@@ -157,21 +158,21 @@ export default function TaskBoard() {
           <h1 className="text-4xl font-bold text-gray-800">Tasks Board</h1>
           <p className="text-gray-600 mt-1">Organize your day</p>
         </div>
-        
+
         <div className="flex gap-2">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium"
+            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2"
           >
-            + New Task
+            <Icon name="plus" className="w-5 h-5" />New Task
           </button>
-          
+
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="px-4 py-3 text-gray-600 hover:bg-gray-200 rounded-lg transition"
             title="Settings"
           >
-            ⚙️
+            <Icon name="settings" className="w-6 h-6" />
           </button>
         </div>
       </div>
@@ -185,7 +186,7 @@ export default function TaskBoard() {
 
         {/* Column 2: Timed Tasks */}
         <div>
-          <TimedTasks 
+          <TimedTasks
             tasks={timedTasks}
             onTaskMenuOpen={handleTaskMenuOpen}
           />
@@ -193,7 +194,7 @@ export default function TaskBoard() {
 
         {/* Column 3: One-Time Tasks */}
         <div>
-          <OneTimeTasks 
+          <OneTimeTasks
             tasks={oneTimeTasks}
             onTaskMenuOpen={handleTaskMenuOpen}
           />
@@ -208,6 +209,7 @@ export default function TaskBoard() {
       />
 
       <TaskModal
+        key={selectedTask?.id ?? 'new'}
         isOpen={isModalOpen && !!selectedTask}
         onClose={() => {
           setIsModalOpen(false)
@@ -220,6 +222,7 @@ export default function TaskBoard() {
       <TaskActionMenu
         isOpen={!!menuOpenTask}
         task={menuOpenTask || ({} as Task)}
+        position={menuPositionRef.current}
         onEdit={() => {
           if (menuOpenTask) {
             setSelectedTask(menuOpenTask)

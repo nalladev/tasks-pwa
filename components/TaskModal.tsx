@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Task, TaskRepeatability } from '@/lib/db'
+import { parseScheduledTime, to24h } from '@/lib/time'
 
 interface TaskModalProps {
   isOpen: boolean
@@ -11,17 +12,24 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalProps) {
+  const initial = parseScheduledTime(task?.scheduledTime || '')
   const [text, setText] = useState(task?.text || '')
   const [repeatability, setRepeatability] = useState<TaskRepeatability>(task?.repeatability || 'never')
-  const [scheduledTime, setScheduledTime] = useState(task?.scheduledTime || '')
+  const [hour12, setHour12] = useState(initial.hour12)
+  const [minute, setMinute] = useState(initial.minute)
+  const [period, setPeriod] = useState<'AM' | 'PM'>(initial.period)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
-    onSave(text.trim(), repeatability, repeatability !== 'never' ? scheduledTime : undefined)
+    const scheduledTime = repeatability !== 'never' ? to24h(hour12, minute, period) : undefined
+    onSave(text.trim(), repeatability, scheduledTime)
     setText('')
     setRepeatability('never')
-    setScheduledTime('')
+    const reset = parseScheduledTime('')
+    setHour12(reset.hour12)
+    setMinute(reset.minute)
+    setPeriod(reset.period)
   }
 
   if (!isOpen) return null
@@ -45,7 +53,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               onChange={(e) => setText(e.target.value)}
               placeholder="What needs to be done?"
               autoFocus
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-400"
             />
           </div>
 
@@ -79,14 +87,41 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Time of Day (Optional)
               </label>
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex gap-2">
+                <select
+                  value={hour12}
+                  onChange={(e) => setHour12(Number(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-gray-500 self-center">:</span>
+                <select
+                  value={minute}
+                  onChange={(e) => setMinute(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                >
+                  {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value as 'AM' | 'PM')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
               <p className="text-xs text-gray-500 mt-1">
-                Leave blank to show anytime during the day
+                Leave as default to show anytime during the day
               </p>
             </div>
           )}

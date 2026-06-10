@@ -1,10 +1,13 @@
 'use client'
 
+import { useRef, useState, useLayoutEffect } from 'react'
 import { Task } from '@/lib/db'
+import Icon from './Icon'
 
 interface TaskActionMenuProps {
   isOpen: boolean
   task: Task
+  position: { x: number; y: number }
   onEdit: () => void
   onToggleDone: () => void
   onDelete: () => void
@@ -14,11 +17,43 @@ interface TaskActionMenuProps {
 export default function TaskActionMenu({
   isOpen,
   task,
+  position,
   onEdit,
   onToggleDone,
   onDelete,
   onClose,
 }: TaskActionMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [computedStyle, setComputedStyle] = useState<React.CSSProperties>({
+    top: position.y,
+    left: position.x,
+  })
+
+  useLayoutEffect(() => {
+    if (!isOpen || !menuRef.current) return
+
+    const menu = menuRef.current
+    const rect = menu.getBoundingClientRect()
+    const menuWidth = rect.width
+    const menuHeight = rect.height
+    const { innerWidth, innerHeight } = window
+
+    let left = position.x
+    let top = position.y
+
+    if (left + menuWidth > innerWidth) {
+      left = position.x - menuWidth
+    }
+    if (top + menuHeight > innerHeight) {
+      top = position.y - menuHeight
+    }
+
+    left = Math.max(4, left)
+    top = Math.max(4, top)
+
+    setComputedStyle({ top, left })
+  }, [isOpen, position])
+
   if (!isOpen) return null
 
   return (
@@ -30,7 +65,11 @@ export default function TaskActionMenu({
       />
 
       {/* Menu */}
-      <div className="fixed bg-white rounded-lg shadow-xl z-50 py-2 min-w-48">
+      <div
+        ref={menuRef}
+        className="fixed bg-white rounded-lg shadow-xl z-50 py-2 min-w-48"
+        style={computedStyle}
+      >
         <button
           onClick={() => {
             onEdit()
@@ -38,7 +77,7 @@ export default function TaskActionMenu({
           }}
           className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
         >
-          ✏️ Edit
+          <Icon name="edit" className="w-4 h-4 inline mr-2 align-text-bottom" />Edit
         </button>
         <button
           onClick={() => {
@@ -47,7 +86,8 @@ export default function TaskActionMenu({
           }}
           className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
         >
-          {task.completed ? '↩️ Undo' : '✓ Mark Done'}
+          <Icon name={task.completed ? 'undo' : 'check'} className="w-4 h-4 inline mr-2 align-text-bottom" />
+          {task.completed ? 'Undo' : 'Mark Done'}
         </button>
         <hr className="my-1" />
         <button
@@ -57,7 +97,7 @@ export default function TaskActionMenu({
           }}
           className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition"
         >
-          🗑️ Delete
+          <Icon name="trash" className="w-4 h-4 inline mr-2 align-text-bottom" />Delete
         </button>
       </div>
     </>

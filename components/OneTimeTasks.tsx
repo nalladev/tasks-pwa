@@ -1,6 +1,8 @@
 'use client'
 
 import { Task } from '@/lib/db'
+import TaskItem from './TaskItem'
+import Icon from './Icon'
 
 interface OneTimeTasksProps {
   tasks: Task[]
@@ -24,13 +26,13 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
         {tasks.length === 0 ? (
           <div className="h-full flex items-center justify-center text-gray-400 text-center">
             <div>
-              <p className="text-lg">✨ All done!</p>
+              <Icon name="sparkles" className="w-6 h-6 mx-auto mb-1" />
+              <p className="text-lg">All done!</p>
               <p className="text-sm">No one-time tasks</p>
             </div>
           </div>
         ) : (
           <>
-            {/* Incomplete Tasks */}
             {incompleteTasks.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -38,42 +40,18 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                 </h3>
                 <div className="space-y-2">
                   {incompleteTasks.map((task) => (
-                    <div
+                    <TaskItem
                       key={task.id}
+                      task={task}
+                      onTaskMenuOpen={onTaskMenuOpen}
                       className="p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-all border border-green-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* Checkbox Indicator */}
-                        <div className="shrink-0 mt-0.5">
-                          <div className="w-4 h-4 border-2 border-green-500 rounded-sm"></div>
-                        </div>
-
-                        {/* Task Content */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 wrap-break-word">
-                            {task.text}
-                          </p>
-                          {!task.synced && (
-                            <p className="text-xs text-gray-500 mt-1">Pending sync</p>
-                          )}
-                        </div>
-
-                        {/* Action Button */}
-                        <button
-                          onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-                          className="shrink-0 text-gray-400 hover:text-gray-600 p-1"
-                          title="Task options"
-                        >
-                          ⋮
-                        </button>
-                      </div>
-                    </div>
+                      footer={!task.synced ? 'Pending sync' : undefined}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Completed Tasks */}
             {completedTasks.length > 0 && (
               <div className="pt-4">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -81,35 +59,12 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen }: OneTimeTasksProp
                 </h3>
                 <div className="space-y-2">
                   {completedTasks.map((task) => (
-                    <div
+                    <TaskItem
                       key={task.id}
+                      task={task}
+                      onTaskMenuOpen={onTaskMenuOpen}
                       className="p-3 bg-gray-50 opacity-60 rounded-lg border border-gray-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* Checkbox Indicator */}
-                        <div className="shrink-0 mt-0.5">
-                          <div className="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
-                            <span className="text-white text-xs">✓</span>
-                          </div>
-                        </div>
-
-                        {/* Task Content */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-500 wrap-break-word line-through">
-                            {task.text}
-                          </p>
-                        </div>
-
-                        {/* Action Button */}
-                        <button
-                          onClick={(e) => onTaskMenuOpen(task, e.currentTarget)}
-                          className="shrink-0 text-gray-300 hover:text-gray-400 p-1"
-                          title="Task options"
-                        >
-                          ⋮
-                        </button>
-                      </div>
-                    </div>
+                    />
                   ))}
                 </div>
               </div>

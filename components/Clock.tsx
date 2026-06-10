@@ -21,7 +21,7 @@ export default function Clock() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-linear-to-b from-blue-500 to-blue-600 rounded-lg shadow-lg p-6">
-      <div className="text-6xl font-bold text-white font-mono">{time}</div>
+      <div className="text-6xl font-bold text-white font-mono text-center">{time}</div>
       <div className="text-blue-100 mt-4 text-sm">
         {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
       </div>
