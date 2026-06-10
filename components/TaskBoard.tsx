@@ -178,15 +178,19 @@ export default function TaskBoard() {
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1
       if (swapIdx < 0 || swapIdx >= incomplete.length) return
 
-      const current = incomplete[idx]
-      const other = incomplete[swapIdx]
+      // Physically move the task in the array
+      const reordered = [...incomplete]
+      const [moved] = reordered.splice(idx, 1)
+      reordered.splice(swapIdx, 0, moved)
 
-      const currentPriority = current.priority ?? idx * 10
-      const otherPriority = other.priority ?? swapIdx * 10
-
-      // Swap priorities
-      await updateTaskPriority(current.id, otherPriority)
-      await updateTaskPriority(other.id, currentPriority)
+      // Reassign all priorities sequentially (no duplicates possible)
+      for (let i = 0; i < reordered.length; i++) {
+        const newPriority = i + 1
+        const task = reordered[i]
+        if (task.priority !== newPriority) {
+          await updateTaskPriority(task.id, newPriority)
+        }
+      }
 
       await reloadTasks()
       syncTodos()
