@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { Task, TaskRepeatability, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo } from '@/lib/db'
-import { syncTodos, setupAutoSync } from '@/lib/sync'
+import { syncTodos, setupAutoSync, pullFromServer } from '@/lib/sync'
 import Clock from './Clock'
 import TimedTasks from './TimedTasks'
 import OneTimeTasks from './OneTimeTasks'
@@ -30,14 +30,26 @@ export default function TaskBoard() {
   const [menuOpenTask, setMenuOpenTask] = useState<Task | null>(null)
   const menuPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
+  const POLL_INTERVAL = 30000
+
+  async function reloadTasks() {
+    const timed = await getTimedTasks()
+    const oneTime = await getOneTimeTasks()
+    setTimedTasks(timed)
+    setOneTimeTasks(oneTime)
+  }
+
   useEffect(() => {
     async function loadTasks() {
       setIsLoading(true)
       try {
-        const timed = await getTimedTasks()
-        const oneTime = await getOneTimeTasks()
-        setTimedTasks(timed)
-        setOneTimeTasks(oneTime)
+        await reloadTasks()
+
+        // Pull latest from server and merge into IndexedDB
+        await pullFromServer()
+
+        // Reload to reflect merged server data
+        await reloadTasks()
       } catch (error) {
         console.error('Error loading tasks:', error)
       } finally {
@@ -47,8 +59,39 @@ export default function TaskBoard() {
 
     if (isHydrated) {
       loadTasks()
-      // Set up auto-sync on mount
       setupAutoSync()
+    }
+  }, [isHydrated])
+
+  // Poll for changes from other devices
+  useEffect(() => {
+    if (!isHydrated) return
+
+    let intervalId: ReturnType<typeof setInterval>
+
+    async function poll() {
+      if (!navigator.onLine) return
+      const changed = await pullFromServer()
+      if (changed) {
+        await reloadTasks()
+      }
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') poll()
+    }
+
+    intervalId = setInterval(poll, POLL_INTERVAL)
+
+    window.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('focus', poll)
+    window.addEventListener('online', poll)
+
+    return () => {
+      clearInterval(intervalId)
+      window.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('focus', poll)
+      window.removeEventListener('online', poll)
     }
   }, [isHydrated])
 

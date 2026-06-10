@@ -1,6 +1,6 @@
 'use client'
 
-import { getPendingTasks, markAsSynced, markAsFailed, Task } from './db'
+import { getPendingTasks, markAsSynced, markAsFailed, getDB, Task } from './db'
 
 const SYNC_INTERVAL = 30000 // 30 seconds
 const MAX_RETRIES = 3
@@ -115,5 +115,43 @@ export async function fetchLatestTasks(): Promise<Task[]> {
   } catch (error) {
     console.error('[Fetch] Error fetching tasks:', error)
     return []
+  }
+}
+
+/**
+ * Pull tasks from server and merge into local IndexedDB.
+ * Server tasks that don't exist locally are added.
+ * For tasks that exist and are synced on both sides, the newer one wins.
+ * Local pending/failed tasks are kept (un-pushed changes take precedence).
+ */
+export async function pullFromServer(): Promise<boolean> {
+  try {
+    const serverTasks = await fetchLatestTasks()
+    if (serverTasks.length === 0) return false
+
+    let changed = false
+    const db = await getDB()
+    const tx = db.transaction('tasks', 'readwrite')
+
+    for (const serverTask of serverTasks) {
+      const existing = await tx.store.get(serverTask.id)
+
+      if (!existing) {
+        await tx.store.put({ ...serverTask, synced: 'synced' })
+        changed = true
+      } else if (existing.synced === 'synced' && !existing.deletedAt) {
+        if (serverTask.lastModifiedAt > existing.lastModifiedAt) {
+          await tx.store.put({ ...serverTask, synced: 'synced' })
+          changed = true
+        }
+      }
+    }
+
+    await tx.done
+    if (changed) console.log('[Pull] Merge complete')
+    return changed
+  } catch (error) {
+    console.error('[Pull] Error pulling tasks from server:', error)
+    return false
   }
 }
