@@ -181,7 +181,7 @@ export default function TaskBoard() {
   // Prevent hydration mismatch by showing empty state until hydrated
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6" />
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6 flex flex-col" />
     )
   }
 
@@ -194,18 +194,18 @@ export default function TaskBoard() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6 flex flex-col">
       {/* Header with Settings */}
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-gray-800">Tasks Board</h1>
+          <h1 className="text-xl md:text-4xl font-bold text-gray-800">Tasks Board</h1>
           <p className="text-gray-600 mt-1">Organize your day</p>
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2"
+            className="px-3 md:px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2"
           >
             <Icon name="plus" className="w-5 h-5" />New Task
           </button>
@@ -220,23 +220,23 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Three Column Layout */}
-      <div className="grid grid-cols-3 gap-6 h-[calc(100vh-180px)]">
-        {/* Column 1: Clock */}
-        <div>
+      {/* Responsive Layout: vertical on mobile, 3-column grid on desktop */}
+      <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:h-[calc(100vh-180px)] flex-1 md:flex-none min-h-0">
+        {/* Clock: auto height on mobile, column on desktop */}
+        <div className="md:contents">
           <Clock />
         </div>
 
-        {/* Column 2: Timed Tasks */}
-        <div>
+        {/* Timed Tasks: flex-1 on mobile, column on desktop */}
+        <div className="flex-1 min-h-0 md:contents">
           <TimedTasks
             tasks={timedTasks}
             onTaskMenuOpen={handleTaskMenuOpen}
           />
         </div>
 
-        {/* Column 3: One-Time Tasks */}
-        <div>
+        {/* One-Time Tasks: flex-1 on mobile, column on desktop */}
+        <div className="flex-1 min-h-0 md:contents">
           <OneTimeTasks
             tasks={oneTimeTasks}
             onTaskMenuOpen={handleTaskMenuOpen}
