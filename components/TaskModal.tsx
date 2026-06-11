@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Task, TaskRepeatability, TaskCategory } from '@/lib/db'
+import { useState, useEffect } from 'react'
+import { Task, TaskRepeatability, TaskCategory, getParticipants } from '@/lib/db'
 import { parseScheduledTime, to24h } from '@/lib/time'
 
 interface TaskModalProps {
@@ -21,11 +21,19 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
   const [period, setPeriod] = useState<'AM' | 'PM'>(initial.period)
   const [scheduledDate, setScheduledDate] = useState(task?.scheduledDate || '')
   const [assignedTo, setAssignedTo] = useState(task?.assignedTo || '')
+  const [participants, setParticipants] = useState<string[]>([])
+
+  useEffect(() => {
+    if (isOpen) {
+      getParticipants().then(setParticipants)
+    }
+  }, [isOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
-    const scheduledTime = to24h(hour12, minute, period)
+    const isDefaultTime = hour12 === 12 && minute === '00' && period === 'AM'
+    const scheduledTime = isDefaultTime ? undefined : to24h(hour12, minute, period)
     const date = repeatability === 'never' ? scheduledDate || undefined : undefined
     onSave(text.trim(), repeatability, scheduledTime, category, date, assignedTo.trim() || undefined)
     setText('')
@@ -142,22 +150,28 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               </select>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Leave as default to show anytime during the day
+              Leave at 12:00 AM to show anytime
             </p>
           </div>
 
           {/* Assigned To */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Assigned To
+              Assigned To (comma-separated)
             </label>
             <input
               type="text"
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
-              placeholder="Who is this task for?"
+              placeholder="Alice, Bob, Charlie"
+              list="participants-list"
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
             />
+            <datalist id="participants-list">
+              {participants.map(p => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
           </div>
 
           {/* Category: Indoor / Outdoor */}

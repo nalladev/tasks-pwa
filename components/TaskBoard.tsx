@@ -102,10 +102,30 @@ export default function TaskBoard() {
 
   function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory, scheduledDate?: string, assignedTo?: string) {
     (async () => {
-    const newTask = await addTask(text, repeatability, scheduledTime, category, undefined, scheduledDate, assignedTo)
+    const priority = repeatability === 'never' ? 1 : undefined
+    const newTask = await addTask(text, repeatability, scheduledTime, category, priority, scheduledDate, assignedTo)
 
     if (repeatability === 'never') {
-      setOneTimeTasks([...oneTimeTasks, newTask])
+      // Reassign priorities so all incomplete one-time tasks are sequential (1, 2, 3, ...)
+      const allOneTime = await getOneTimeTasks()
+      const incomplete = allOneTime
+        .filter(t => !t.completed)
+        .sort((a, b) => {
+          const pa = a.priority ?? 9999
+          const pb = b.priority ?? 9999
+          if (pa !== pb) return pa - pb
+          return b.createdAt - a.createdAt
+        })
+
+      for (let i = 0; i < incomplete.length; i++) {
+        const newPriority = i + 1
+        const task = incomplete[i]
+        if (task.priority !== newPriority) {
+          await updateTaskPriority(task.id, newPriority)
+        }
+      }
+
+      await reloadTasks()
     } else {
       setTimedTasks([...timedTasks, newTask])
     }
@@ -191,18 +211,16 @@ export default function TaskBoard() {
       if (swapIdx < 0 || swapIdx >= incomplete.length) return
 
       // Physically move the task in the array
-      const reordered = [...incomplete]
-      const [moved] = reordered.splice(idx, 1)
-      reordered.splice(swapIdx, 0, moved)
+      // Simply swap priority values between the two adjacent tasks
+      const currentTask = incomplete[idx]
+      const swapTask = incomplete[swapIdx]
 
-      // Reassign all priorities sequentially (no duplicates possible)
-      for (let i = 0; i < reordered.length; i++) {
-        const newPriority = i + 1
-        const task = reordered[i]
-        if (task.priority !== newPriority) {
-          await updateTaskPriority(task.id, newPriority)
-        }
-      }
+      const currentPriority = currentTask.priority ?? idx + 1
+      const swapPriority = swapTask.priority ?? swapIdx + 1
+
+      // Swap their priorities
+      await updateTaskPriority(currentTask.id, swapPriority)
+      await updateTaskPriority(swapTask.id, currentPriority)
 
       await reloadTasks()
       syncTodos()
@@ -234,10 +252,14 @@ export default function TaskBoard() {
     )
   }
 
-  if (isInitialLoad && timedTasks.length === 0 && oneTimeTasks.length === 0) {
+  if (isInitialLoad) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-gray-600 dark:text-gray-400">Loading tasks...</div>
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 flex flex-col">
+        <div className="flex items-center justify-center flex-1">
+          <div className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+            <span className="animate-pulse">Loading tasks...</span>
+          </div>
+        </div>
       </div>
     )
   }
@@ -261,7 +283,7 @@ export default function TaskBoard() {
             onClick={() => setIsModalOpen(true)}
             className="px-3 md:px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2"
           >
-            <Icon name="plus" className="w-5 h-5" />New Task
+            <Icon name="plus" className="w-5 h-5" /><span className="hidden md:inline">New Task</span>
           </button>
 
           <button

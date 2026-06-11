@@ -110,11 +110,13 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                   task={task}
                   onTaskMenuOpen={onTaskMenuOpen}
                   footer={<span className="flex items-center gap-2 flex-wrap">
-                    {task.assignedTo && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-                        {task.assignedTo}
-                      </span>
-                    )}
+                    {task.assignedTo && task.assignedTo.split(',').map((name, i) => (
+                      name.trim() && (
+                        <span key={i} className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                          {name.trim()}
+                        </span>
+                      )
+                    ))}
                     {task.repeatability}
                     {task.category && (
                       <span className={`ml-1 inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${

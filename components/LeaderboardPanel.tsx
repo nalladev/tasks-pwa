@@ -15,8 +15,9 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
   const map = new Map<string, { count: number; lastCompletedAt: number }>()
 
   for (const task of tasks) {
-    const name = task.assignedTo?.trim() || 'Unknown'
-    const existing = map.get(name)
+    const names = task.assignedTo
+      ? task.assignedTo.split(',').map(s => s.trim()).filter(Boolean)
+      : ['Unknown']
 
     // Debug logging for completedAt type issues
     const rawCompletedAt: unknown = task.completedAt
@@ -31,22 +32,62 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
       })
     }
 
-    if (existing) {
-      existing.count++
-      if (task.completedAt && task.completedAt > existing.lastCompletedAt) {
-        existing.lastCompletedAt = task.completedAt
+    for (const name of names) {
+      const existing = map.get(name)
+      if (existing) {
+        existing.count++
+        if (task.completedAt && task.completedAt > existing.lastCompletedAt) {
+          existing.lastCompletedAt = task.completedAt
+        }
+      } else {
+        map.set(name, {
+          count: 1,
+          lastCompletedAt: task.completedAt || 0,
+        })
       }
-    } else {
-      map.set(name, {
-        count: 1,
-        lastCompletedAt: task.completedAt || 0,
-      })
     }
   }
 
   return Array.from(map.entries())
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.count - a.count || b.lastCompletedAt - a.lastCompletedAt)
+}
+
+interface LeaderboardTier {
+  rank: number
+  count: number
+  names: string[]
+  lastCompletedAt: number
+}
+
+/**
+ * Group entries with the same count into tiers.
+ */
+function groupIntoTiers(entries: LeaderboardEntry[]): LeaderboardTier[] {
+  const tiers: LeaderboardTier[] = []
+  let rank = 0
+
+  for (const entry of entries) {
+    const prev = tiers[tiers.length - 1]
+    if (prev && prev.count === entry.count) {
+      // Same tier — add name, keep latest completion
+      prev.names.push(entry.name)
+      if (entry.lastCompletedAt > prev.lastCompletedAt) {
+        prev.lastCompletedAt = entry.lastCompletedAt
+      }
+    } else {
+      // New tier
+      rank++
+      tiers.push({
+        rank,
+        count: entry.count,
+        names: [entry.name],
+        lastCompletedAt: entry.lastCompletedAt,
+      })
+    }
+  }
+
+  return tiers
 }
 
 function formatDate(timestamp: number): string {
@@ -145,50 +186,65 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
             </div>
           </div>
         ) : (
-          /* Leaderboard */
-          <div className="space-y-3">
-            {entries.map((entry, index) => {
-              const isPodium = index < 3
-              const cardStyle = isPodium ? RANK_COLORS[index] : 'bg-white dark:bg-gray-800 border-transparent'
+          /* Leaderboard — grouped into tiers */
+          <div className="space-y-4">
+            {(() => {
+              const tiers = groupIntoTiers(entries)
+              return tiers.map((tier, tierIndex) => {
+                const isPodium = tierIndex < 3
+                const cardStyle = isPodium
+                  ? RANK_COLORS[tierIndex]
+                  : 'bg-white dark:bg-gray-800 border-transparent'
 
-              return (
-                <div
-                  key={entry.name}
-                  className={`rounded-lg shadow-lg border-2 p-4 md:p-5 flex items-center gap-4 transition hover:shadow-xl ${cardStyle}`}
-                >
-                  {/* Rank */}
-                  <div className="shrink-0 w-10 h-10 flex items-center justify-center">
-                    {isPodium ? (
-                      <span className="text-2xl">{PODIUM_EMOJIS[index]}</span>
-                    ) : (
-                      <span className="text-lg font-bold text-gray-500 dark:text-gray-400">
-                        #{index + 1}
-                      </span>
-                    )}
-                  </div>
+                return (
+                  <div
+                    key={tier.rank}
+                    className={`rounded-lg shadow-lg border-2 p-4 md:p-5 transition hover:shadow-xl ${cardStyle}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Rank */}
+                      <div className="shrink-0 w-10 h-10 flex items-center justify-center">
+                        {isPodium ? (
+                          <span className="text-2xl">{PODIUM_EMOJIS[tierIndex]}</span>
+                        ) : (
+                          <span className="text-lg font-bold text-gray-500 dark:text-gray-400">
+                            #{tier.rank}
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Name */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">
-                      {entry.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Last completed: {formatDate(entry.lastCompletedAt)}
-                    </p>
-                  </div>
+                      {/* Names */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap gap-1.5">
+                          {tier.names.map((name) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full bg-white/70 dark:bg-gray-700/70 text-gray-800 dark:text-gray-100"
+                            >
+                              <Icon name="user" className="w-3.5 h-3.5 shrink-0" />
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+                          Last completed: {formatDate(tier.lastCompletedAt)}
+                        </p>
+                      </div>
 
-                  {/* Count */}
-                  <div className="shrink-0 text-right">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {entry.count}
+                      {/* Count */}
+                      <div className="shrink-0 text-right">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {tier.count}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          task{tier.count !== 1 ? 's' : ''}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      task{entry.count !== 1 ? 's' : ''}
-                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })
+            })()}
           </div>
         )}
       </div>

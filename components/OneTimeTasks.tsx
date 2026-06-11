@@ -131,12 +131,14 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen, onReorder }: OneTi
     return (
       <span className="flex items-center gap-2 flex-wrap">
         {!task.synced && <span>Pending sync</span>}
-        {task.assignedTo && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-            <Icon name="user" className="w-3 h-3" />
-            {task.assignedTo}
-          </span>
-        )}
+        {task.assignedTo && task.assignedTo.split(',').map((name, i) => (
+          name.trim() && (
+            <span key={i} className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+              <Icon name="user" className="w-3 h-3" />
+              {name.trim()}
+            </span>
+          )
+        ))}
         {schedule && (
           <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
             isOverdue(task)
@@ -319,7 +321,7 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen, onReorder }: OneTi
             {upcomingTasks.length > 0 && (
               <div className={(overdueTasks.length > 0 || todayTasks.length > 0) ? 'pt-4' : ''}>
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Upcoming ({upcomingTasks.length})
+                  Pending ({upcomingTasks.length})
                 </h3>
                 <div className="space-y-2">
                   {upcomingTasks.map((task, index, arr) => (

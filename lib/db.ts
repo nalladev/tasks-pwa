@@ -144,6 +144,29 @@ export async function restoreTask(id: string): Promise<void> {
 }
 
 /**
+ * Get all unique participants across all tasks.
+ * Splits comma-separated names, trims whitespace, deduplicates case-insensitively.
+ */
+export async function getParticipants(): Promise<string[]> {
+  const tasks = await getTasks()
+  const nameMap = new Map<string, string>()
+
+  for (const task of tasks) {
+    if (task.assignedTo) {
+      const parts = task.assignedTo.split(',').map(s => s.trim()).filter(Boolean)
+      for (const name of parts) {
+        const key = name.toLowerCase()
+        if (!nameMap.has(key)) {
+          nameMap.set(key, name)
+        }
+      }
+    }
+  }
+
+  return Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b))
+}
+
+/**
  * Get completed tasks (for leaderboard/analytics)
  */
 export async function getCompletedTasks(): Promise<Task[]> {
