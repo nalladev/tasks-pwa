@@ -19,14 +19,15 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
     const existing = map.get(name)
 
     // Debug logging for completedAt type issues
-    if (task.completedAt != null && typeof task.completedAt !== 'number') {
+    const rawCompletedAt: unknown = task.completedAt
+    if (rawCompletedAt != null && typeof rawCompletedAt !== 'number') {
       console.warn('[Leaderboard] Unexpected completedAt type:', {
         id: task.id,
         text: task.text.slice(0, 30),
         assignedTo: task.assignedTo,
-        completedAt: task.completedAt,
-        type: typeof task.completedAt,
-        constructor: task.completedAt?.constructor?.name,
+        completedAt: rawCompletedAt,
+        type: typeof rawCompletedAt,
+        constructor: (rawCompletedAt as object)?.constructor?.name,
       })
     }
 

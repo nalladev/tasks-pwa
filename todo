@@ -1,5 +1,7 @@
 No feature shall break esixting offline pwa in production should work with existing firestore documents or offline saved tasks
 
+already completed todo / testing todo
+
 schedule 1 time tasks to a specific day / time
 
 assign tasks
@@ -16,9 +18,7 @@ loading tasks overview blocking ui sometimes , is it because there is no tasks t
 
 completed filter in one time tasks section
 
-
-
-new todo
+pending todo
 
 why is one time tasks section has naming such as upcoming , pending seems more apt,
 
