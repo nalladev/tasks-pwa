@@ -111,6 +111,60 @@ const RANK_COLORS = [
   'bg-orange-50 dark:bg-orange-900/30 border-orange-400 dark:border-orange-600',   // 🥉 Bronze
 ]
 
+/**
+ * Compute sizing classes based on rank position (0 = highest rank).
+ * Higher ranks get larger paddings, fonts, and icons; lower ranks scale down.
+ */
+function getRankSizing(tierIndex: number) {
+  if (tierIndex === 0) {
+    return {
+      cardPad: 'p-5 md:p-7',
+      emojiSize: 'text-3xl',
+      rankNumSize: 'text-xl',
+      nameChipSize: 'text-sm px-3 py-1.5',
+      nameIconSize: 'w-4 h-4',
+      countSize: 'text-3xl',
+      countLabelSize: 'text-xs',
+    }
+  }
+  if (tierIndex === 1) {
+    return {
+      cardPad: 'p-4 md:p-6',
+      emojiSize: 'text-2xl',
+      rankNumSize: 'text-lg',
+      nameChipSize: 'text-sm px-2.5 py-1',
+      nameIconSize: 'w-3.5 h-3.5',
+      countSize: 'text-2xl',
+      countLabelSize: 'text-xs',
+    }
+  }
+  if (tierIndex === 2) {
+    return {
+      cardPad: 'p-4 md:p-5',
+      emojiSize: 'text-2xl',
+      rankNumSize: 'text-base',
+      nameChipSize: 'text-xs px-2 py-1',
+      nameIconSize: 'w-3 h-3',
+      countSize: 'text-xl',
+      countLabelSize: 'text-[11px]',
+    }
+  }
+  // Tiers 4+ — progressively smaller, capped at a minimum
+  const shrink = Math.min(tierIndex - 2, 3)
+  const padMap = [4, 3, 2, 2]
+  const padMdMap = [5, 4, 3, 3]
+  const countMap = ['text-xl', 'text-lg', 'text-base', 'text-base']
+  return {
+    cardPad: `p-${padMap[shrink]} md:p-${padMdMap[shrink]}`,
+    emojiSize: 'text-lg',
+    rankNumSize: 'text-sm',
+    nameChipSize: 'text-xs px-2 py-0.5',
+    nameIconSize: 'w-2.5 h-2.5',
+    countSize: countMap[shrink],
+    countLabelSize: 'text-[10px]',
+  }
+}
+
 interface LeaderboardPanelProps {
   isOpen: boolean
   onClose: () => void
@@ -192,22 +246,26 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
               const tiers = groupIntoTiers(entries)
               return tiers.map((tier, tierIndex) => {
                 const isPodium = tierIndex < 3
+                const isLowRank = tierIndex >= 6
                 const cardStyle = isPodium
                   ? RANK_COLORS[tierIndex]
                   : 'bg-white dark:bg-gray-800 border-transparent'
 
+                const size = getRankSizing(tierIndex)
+                const gapClass = isLowRank ? 'gap-3' : 'gap-4'
+
                 return (
                   <div
                     key={tier.rank}
-                    className={`rounded-lg shadow-lg border-2 p-4 md:p-5 transition hover:shadow-xl ${cardStyle}`}
+                    className={`rounded-lg shadow-lg border-2 ${size.cardPad} transition hover:shadow-xl ${cardStyle}`}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className={`flex items-center ${gapClass}`}>
                       {/* Rank */}
-                      <div className="shrink-0 w-10 h-10 flex items-center justify-center">
+                      <div className="shrink-0 flex items-center justify-center">
                         {isPodium ? (
-                          <span className="text-2xl">{PODIUM_EMOJIS[tierIndex]}</span>
+                          <span className={size.emojiSize}>{PODIUM_EMOJIS[tierIndex]}</span>
                         ) : (
-                          <span className="text-lg font-bold text-gray-500 dark:text-gray-400">
+                          <span className={`${size.rankNumSize} font-bold text-gray-500 dark:text-gray-400`}>
                             #{tier.rank}
                           </span>
                         )}
@@ -219,9 +277,9 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
                           {tier.names.map((name) => (
                             <span
                               key={name}
-                              className="inline-flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full bg-white/70 dark:bg-gray-700/70 text-gray-800 dark:text-gray-100"
+                              className={`inline-flex items-center gap-1 font-medium ${size.nameChipSize} rounded-full bg-white/70 dark:bg-gray-700/70 text-gray-800 dark:text-gray-100`}
                             >
-                              <Icon name="user" className="w-3.5 h-3.5 shrink-0" />
+                              <Icon name="user" className={`${size.nameIconSize} shrink-0`} />
                               {name}
                             </span>
                           ))}
@@ -232,11 +290,11 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
                       </div>
 
                       {/* Count */}
-                      <div className="shrink-0 text-right">
-                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      <div className={`shrink-0 text-right ${isLowRank ? 'ml-auto' : ''}`}>
+                        <div className={`${size.countSize} font-bold text-blue-600 dark:text-blue-400`}>
                           {tier.count}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className={`${size.countLabelSize} text-gray-500 dark:text-gray-400`}>
                           task{tier.count !== 1 ? 's' : ''}
                         </div>
                       </div>
