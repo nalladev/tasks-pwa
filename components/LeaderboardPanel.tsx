@@ -106,9 +106,9 @@ function formatDate(timestamp: number): string {
 const PODIUM_EMOJIS = ['🥇', '🥈', '🥉']
 
 const RANK_COLORS = [
-  'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-600',
-  'bg-gray-50 dark:bg-gray-700/50 border-gray-300 dark:border-gray-600',
-  'bg-orange-50 dark:bg-orange-900/30 border-orange-300 dark:border-orange-600',
+  'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-400 dark:border-yellow-600',    // 🥇 Gold
+  'bg-slate-50 dark:bg-slate-700/50 border-slate-300 dark:border-slate-500',       // 🥈 Silver
+  'bg-orange-50 dark:bg-orange-900/30 border-orange-400 dark:border-orange-600',   // 🥉 Bronze
 ]
 
 interface LeaderboardPanelProps {
