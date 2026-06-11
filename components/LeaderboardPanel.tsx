@@ -17,6 +17,19 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
   for (const task of tasks) {
     const name = task.assignedTo?.trim() || 'Unknown'
     const existing = map.get(name)
+
+    // Debug logging for completedAt type issues
+    if (task.completedAt != null && typeof task.completedAt !== 'number') {
+      console.warn('[Leaderboard] Unexpected completedAt type:', {
+        id: task.id,
+        text: task.text.slice(0, 30),
+        assignedTo: task.assignedTo,
+        completedAt: task.completedAt,
+        type: typeof task.completedAt,
+        constructor: task.completedAt?.constructor?.name,
+      })
+    }
+
     if (existing) {
       existing.count++
       if (task.completedAt && task.completedAt > existing.lastCompletedAt) {
@@ -37,7 +50,12 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
 
 function formatDate(timestamp: number): string {
   if (!timestamp) return 'N/A'
-  return new Date(timestamp).toLocaleDateString('en-US', {
+  const date = new Date(timestamp)
+  if (isNaN(date.getTime())) {
+    console.warn('[Leaderboard] Invalid date from timestamp:', { timestamp, type: typeof timestamp, constructor: (timestamp as any)?.constructor?.name })
+    return 'N/A'
+  }
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

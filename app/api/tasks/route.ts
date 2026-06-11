@@ -24,7 +24,6 @@ export async function GET() {
         category: data.category || undefined,
         priority: data.priority ?? undefined,
         assignedTo: data.assignedTo || undefined,
-        completedAt: data.completedAt || undefined,
         synced: 'synced',
         lastSyncAt: data.lastSyncAt,
       }
@@ -32,6 +31,11 @@ export async function GET() {
       if (data.deletedAt) {
         const deletedAt = data.deletedAt?.toDate?.() || data.deletedAt || new Date()
         task.deletedAt = deletedAt instanceof Date ? deletedAt.getTime() : Number(deletedAt)
+      }
+
+      if (data.completedAt) {
+        const completedAt = data.completedAt?.toDate?.() || data.completedAt
+        task.completedAt = completedAt instanceof Date ? completedAt.getTime() : Number(completedAt)
       }
 
       tasks.push(task)
