@@ -20,8 +20,11 @@ export async function GET() {
         lastModifiedAt: lastModifiedAt instanceof Date ? lastModifiedAt.getTime() : Number(lastModifiedAt),
         repeatability: data.repeatability || 'never',
         scheduledTime: data.scheduledTime || undefined,
+        scheduledDate: data.scheduledDate || undefined,
         category: data.category || undefined,
         priority: data.priority ?? undefined,
+        assignedTo: data.assignedTo || undefined,
+        completedAt: data.completedAt || undefined,
         synced: 'synced',
         lastSyncAt: data.lastSyncAt,
       }

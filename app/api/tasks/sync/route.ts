@@ -41,8 +41,11 @@ export async function POST(request: NextRequest) {
               lastModifiedAt: new Date(task.lastModifiedAt),
               repeatability: task.repeatability,
               scheduledTime: task.scheduledTime || null,
+              scheduledDate: task.scheduledDate || null,
               category: task.category || null,
               priority: task.priority ?? null,
+              assignedTo: task.assignedTo || null,
+              completedAt: task.completedAt ? new Date(task.completedAt) : null,
               lastSyncAt: new Date(),
             },
             { merge: true }

@@ -16,8 +16,11 @@ export interface Task {
   createdAt: number
   repeatability: TaskRepeatability
   scheduledTime?: string
+  scheduledDate?: string // ISO date string (YYYY-MM-DD) for one-time tasks
   category?: TaskCategory
   priority?: number
+  assignedTo?: string // Who the task is assigned to/completed it
+  completedAt?: number // When the task was completed
   // Sync metadata
   synced: SyncStatus
   lastSyncAt?: number
@@ -57,7 +60,9 @@ export async function addTask(
   repeatability: TaskRepeatability = 'never',
   scheduledTime?: string,
   category?: TaskCategory,
-  priority?: number
+  priority?: number,
+  scheduledDate?: string,
+  assignedTo?: string
 ): Promise<Task> {
   const db = await getDB()
   const now = Date.now()
@@ -69,8 +74,10 @@ export async function addTask(
     lastModifiedAt: now,
     repeatability,
     scheduledTime,
+    scheduledDate,
     category,
     priority,
+    assignedTo,
     synced: 'pending',
   }
   await db.add('tasks', task)
@@ -108,6 +115,41 @@ export async function getOneTimeTasks(): Promise<Task[]> {
   const db = await getDB()
   const allTasks = await db.getAll('tasks')
   return allTasks.filter(t => t.repeatability === 'never' && !t.deletedAt)
+}
+
+/**
+ * Get soft-deleted tasks (for recycle bin)
+ */
+export async function getDeletedTasks(): Promise<Task[]> {
+  const db = await getDB()
+  const allTasks = await db.getAll('tasks')
+  return allTasks.filter(t => t.deletedAt).sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0))
+}
+
+/**
+ * Restore a soft-deleted task
+ */
+export async function restoreTask(id: string): Promise<void> {
+  const db = await getDB()
+  const task = await db.get('tasks', id)
+  if (!task) return
+
+  const restored: Task = {
+    ...task,
+    deletedAt: undefined,
+    lastModifiedAt: Date.now(),
+    synced: 'pending',
+  }
+  await db.put('tasks', restored)
+}
+
+/**
+ * Get completed tasks (for leaderboard/analytics)
+ */
+export async function getCompletedTasks(): Promise<Task[]> {
+  const db = await getDB()
+  const allTasks = await db.getAll('tasks')
+  return allTasks.filter(t => t.completed && !t.deletedAt)
 }
 
 /**

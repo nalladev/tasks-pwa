@@ -7,7 +7,7 @@ import { parseScheduledTime, to24h } from '@/lib/time'
 interface TaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) => void
+  onSave: (text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory, scheduledDate?: string, assignedTo?: string) => void
   task?: Task
 }
 
@@ -19,15 +19,20 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
   const [hour12, setHour12] = useState(initial.hour12)
   const [minute, setMinute] = useState(initial.minute)
   const [period, setPeriod] = useState<'AM' | 'PM'>(initial.period)
+  const [scheduledDate, setScheduledDate] = useState(task?.scheduledDate || '')
+  const [assignedTo, setAssignedTo] = useState(task?.assignedTo || '')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
-    const scheduledTime = repeatability !== 'never' ? to24h(hour12, minute, period) : undefined
-    onSave(text.trim(), repeatability, scheduledTime, category)
+    const scheduledTime = to24h(hour12, minute, period)
+    const date = repeatability === 'never' ? scheduledDate || undefined : undefined
+    onSave(text.trim(), repeatability, scheduledTime, category, date, assignedTo.trim() || undefined)
     setText('')
     setRepeatability('never')
     setCategory(undefined)
+    setScheduledDate('')
+    setAssignedTo('')
     const reset = parseScheduledTime('')
     setHour12(reset.hour12)
     setMinute(reset.minute)
@@ -83,50 +88,77 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
             </div>
           </div>
 
-          {/* Scheduled Time */}
-          {repeatability !== 'never' && (
+          {/* Scheduled Date (for one-time tasks) */}
+          {repeatability === 'never' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Time of Day (Optional)
+                Scheduled Date
               </label>
-              <div className="flex gap-2">
-                <select
-                  value={hour12}
-                  onChange={(e) => setHour12(Number(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                    <option key={h} value={h}>
-                      {h}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-gray-500 dark:text-gray-400 self-center">:</span>
-                <select
-                  value={minute}
-                  onChange={(e) => setMinute(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
-                >
-                  {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value as 'AM' | 'PM')}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Leave as default to show anytime during the day
-              </p>
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
+              />
             </div>
           )}
+
+          {/* Scheduled Time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Time of Day (Optional)
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={hour12}
+                onChange={(e) => setHour12(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <span className="text-gray-500 dark:text-gray-400 self-center">:</span>
+              <select
+                value={minute}
+                onChange={(e) => setMinute(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
+              >
+                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as 'AM' | 'PM')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700"
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Leave as default to show anytime during the day
+            </p>
+          </div>
+
+          {/* Assigned To */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Assigned To
+            </label>
+            <input
+              type="text"
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              placeholder="Who is this task for?"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
 
           {/* Category: Indoor / Outdoor */}
           <div>

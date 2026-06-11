@@ -13,8 +13,15 @@ interface TimedTasksProps {
   onTaskMenuOpen: (task: Task, buttonElement: HTMLElement) => void
 }
 
+function getStoredFilter(key: string, defaultValue: FilterMode): FilterMode {
+  if (typeof window === 'undefined') return defaultValue
+  const stored = localStorage.getItem(key)
+  if (stored === 'all' || stored === 'indoor' || stored === 'outdoor') return stored
+  return defaultValue
+}
+
 export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
-  const [filter, setFilter] = useState<FilterMode>('all')
+  const [filter, setFilter] = useState<FilterMode>(() => getStoredFilter('timed-tasks-filter', 'all'))
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentTime, setCurrentTime] = useState<string>('')
 
@@ -68,7 +75,10 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
         {filterButtons.map(({ mode, label }) => (
           <button
             key={mode}
-            onClick={() => setFilter(mode)}
+            onClick={() => {
+              setFilter(mode)
+              localStorage.setItem('timed-tasks-filter', mode)
+            }}
             className={`px-3 py-1 text-xs font-medium rounded-full transition ${
               filter === mode
                 ? 'bg-purple-500 text-white'
@@ -99,7 +109,12 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                   key={task.id}
                   task={task}
                   onTaskMenuOpen={onTaskMenuOpen}
-                  footer={<>
+                  footer={<span className="flex items-center gap-2 flex-wrap">
+                    {task.assignedTo && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                        {task.assignedTo}
+                      </span>
+                    )}
                     {task.repeatability}
                     {task.category && (
                       <span className={`ml-1 inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
@@ -111,7 +126,7 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
                       </span>
                     )}
                     {!task.synced && ' • Pending'}
-                  </>}
+                  </span>}
                   className={`p-4 rounded-lg transition-all ${
                     isCurrentTime
                       ? 'bg-yellow-100 dark:bg-yellow-900/40 border-2 border-yellow-500 shadow-lg scale-105'

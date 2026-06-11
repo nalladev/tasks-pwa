@@ -9,6 +9,8 @@ import OneTimeTasks from './OneTimeTasks'
 import TaskModal from './TaskModal'
 import TaskActionMenu from './TaskActionMenu'
 import SettingsPopup from './SettingsPopup'
+import LeaderboardPanel from './LeaderboardPanel'
+import RecycleBinPanel from './RecycleBinPanel'
 import Icon from './Icon'
 
 const subscribeToHydration = () => () => {}
@@ -18,7 +20,8 @@ const getServerHydrationSnapshot = () => false
 export default function TaskBoard() {
   const [timedTasks, setTimedTasks] = useState<Task[]>([])
   const [oneTimeTasks, setOneTimeTasks] = useState<Task[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     getClientHydrationSnapshot,
@@ -26,6 +29,8 @@ export default function TaskBoard() {
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false)
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [menuOpenTask, setMenuOpenTask] = useState<Task | null>(null)
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -41,19 +46,21 @@ export default function TaskBoard() {
 
   useEffect(() => {
     async function loadTasks() {
-      setIsLoading(true)
+      // First, load from IndexedDB immediately
+      setIsInitialLoad(true)
       try {
         await reloadTasks()
+        setIsInitialLoad(false)
 
-        // Pull latest from server and merge into IndexedDB
+        // Then pull from server in background
+        setIsSyncing(true)
         await pullFromServer()
-
-        // Reload to reflect merged server data
         await reloadTasks()
       } catch (error) {
         console.error('Error loading tasks:', error)
       } finally {
-        setIsLoading(false)
+        setIsInitialLoad(false)
+        setIsSyncing(false)
       }
     }
 
@@ -93,9 +100,9 @@ export default function TaskBoard() {
     }
   }, [isHydrated])
 
-  function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) {
+  function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory, scheduledDate?: string, assignedTo?: string) {
     (async () => {
-    const newTask = await addTask(text, repeatability, scheduledTime, category)
+    const newTask = await addTask(text, repeatability, scheduledTime, category, undefined, scheduledDate, assignedTo)
 
     if (repeatability === 'never') {
       setOneTimeTasks([...oneTimeTasks, newTask])
@@ -108,15 +115,17 @@ export default function TaskBoard() {
     })()
   }
 
-  function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory) {
+  function handleEditTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory, scheduledDate?: string, assignedTo?: string) {
     (async () => {
     if (!selectedTask) return
 
     const updates = {
       text,
       repeatability,
-      scheduledTime: repeatability !== 'never' ? scheduledTime : undefined,
+      scheduledTime,
+      scheduledDate: repeatability === 'never' ? scheduledDate : undefined,
       category,
+      assignedTo,
     }
 
     await updateTodo(selectedTask.id, updates)
@@ -146,12 +155,15 @@ export default function TaskBoard() {
 
   function handleToggleDone(task: Task) {
     (async () => {
-    await updateTodo(task.id, { completed: !task.completed })
+    const completing = !task.completed
+    const updates: Partial<Task> = { completed: completing, completedAt: completing ? Date.now() : undefined }
+
+    await updateTodo(task.id, updates)
 
     if (task.repeatability === 'never') {
-      setOneTimeTasks(oneTimeTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))
+      setOneTimeTasks(oneTimeTasks.map(t => t.id === task.id ? { ...t, ...updates } : t))
     } else {
-      setTimedTasks(timedTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))
+      setTimedTasks(timedTasks.map(t => t.id === task.id ? { ...t, ...updates } : t))
     }
 
     setMenuOpenTask(null)
@@ -222,7 +234,7 @@ export default function TaskBoard() {
     )
   }
 
-  if (isLoading) {
+  if (isInitialLoad && timedTasks.length === 0 && oneTimeTasks.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-gray-600 dark:text-gray-400">Loading tasks...</div>
@@ -234,9 +246,14 @@ export default function TaskBoard() {
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 flex flex-col">
       {/* Header with Settings */}
       <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">Tasks Board</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Organize your day</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">Tasks Board</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Organize your day</p>
+          </div>
+          {isSyncing && (
+            <Icon name="sparkles" className="w-5 h-5 text-blue-500 animate-spin" />
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -248,8 +265,24 @@ export default function TaskBoard() {
           </button>
 
           <button
+            onClick={() => setIsLeaderboardOpen(true)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+            title="Leaderboard"
+          >
+            <Icon name="trophy" className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={() => setIsRecycleBinOpen(true)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+            title="Recycle Bin"
+          >
+            <Icon name="trash" className="w-6 h-6" />
+          </button>
+
+          <button
             onClick={() => setIsSettingsOpen(true)}
-            className="px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
             title="Settings"
           >
             <Icon name="settings" className="w-6 h-6" />
@@ -321,6 +354,17 @@ export default function TaskBoard() {
           }
         }}
         onClose={() => setMenuOpenTask(null)}
+      />
+
+      {/* Full-page overlays */}
+      <LeaderboardPanel
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+      />
+
+      <RecycleBinPanel
+        isOpen={isRecycleBinOpen}
+        onClose={() => setIsRecycleBinOpen(false)}
       />
 
       <SettingsPopup

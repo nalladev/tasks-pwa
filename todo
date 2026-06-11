@@ -1,0 +1,20 @@
+No feature shall break esixting offline pwa in production should work with existing firestore documents or offline saved tasks
+
+schedule 1 time tasks to a specific day / time
+
+assign tasks
+
+field for writing who completed a tasks
+
+task completion analysis page - leaderboard for most task completed
+
+recycle bin showing deleted tasks with remove from firestore or restore option.
+
+retain filter options between reloads
+
+loading tasks overview blocking ui sometimes , is it because there is no tasks to be shown or when syncing or updating. if syncing or updating we dont have to show a full screen loading screen
+
+
+new todo
+
+completed filter in one time tasks section
