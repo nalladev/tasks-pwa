@@ -28,7 +28,6 @@ function aggregateByUser(tasks: Task[]): LeaderboardEntry[] {
         assignedTo: task.assignedTo,
         completedAt: rawCompletedAt,
         type: typeof rawCompletedAt,
-        constructor: (rawCompletedAt as object)?.constructor?.name,
       })
     }
 
@@ -94,7 +93,7 @@ function formatDate(timestamp: number): string {
   if (!timestamp) return 'N/A'
   const date = new Date(timestamp)
   if (isNaN(date.getTime())) {
-    console.warn('[Leaderboard] Invalid date from timestamp:', { timestamp, type: typeof timestamp, constructor: (timestamp as any)?.constructor?.name })
+    console.warn('[Leaderboard] Invalid date from timestamp:', { timestamp, type: typeof timestamp })
     return 'N/A'
   }
   return date.toLocaleDateString('en-US', {
@@ -123,6 +122,7 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
   const [refreshing, setRefreshing] = useState(false)
 
   const loadData = useCallback(async () => {
+    setLoading(true)
     try {
       const completedTasks = await getCompletedTasks()
       const grouped = aggregateByUser(completedTasks)
@@ -137,7 +137,7 @@ export default function LeaderboardPanel({ isOpen, onClose }: LeaderboardPanelPr
 
   useEffect(() => {
     if (isOpen) {
-      setLoading(true)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadData()
     }
   }, [isOpen, loadData])

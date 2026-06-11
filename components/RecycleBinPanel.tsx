@@ -105,14 +105,16 @@ export default function RecycleBinPanel({ isOpen, onClose }: RecycleBinPanelProp
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
 
   const loadDeletedTasks = useCallback(async () => {
+    setIsLoading(true)
     const tasks = await getDeletedTasks()
     setDeletedTasks(tasks)
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
     if (isOpen) {
-      setIsLoading(true)
-      loadDeletedTasks().finally(() => setIsLoading(false))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadDeletedTasks()
     }
   }, [isOpen, loadDeletedTasks])
 
