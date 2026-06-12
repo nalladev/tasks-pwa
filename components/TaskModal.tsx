@@ -22,9 +22,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
   const [scheduledDate, setScheduledDate] = useState(task?.scheduledDate || '')
   const [assignedTo, setAssignedTo] = useState(task?.assignedTo || '')
   const [participants, setParticipants] = useState<string[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
   const assignedInputRef = useRef<HTMLInputElement>(null)
-  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   // Extract the current name segment being typed (after the last comma)
   const currentName = useMemo(() => {
@@ -49,28 +47,11 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
     }
   }, [isOpen])
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        assignedInputRef.current &&
-        !assignedInputRef.current.contains(e.target as Node) &&
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   function selectSuggestion(name: string) {
     const parts = assignedTo.split(',').map(s => s.trim())
     parts[parts.length - 1] = name
     // Add trailing comma so user can keep adding
     setAssignedTo(parts.join(', ') + ', ')
-    setShowSuggestions(false)
     assignedInputRef.current?.focus()
   }
 
@@ -200,7 +181,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
           </div>
 
           {/* Assigned To */}
-          <div className="relative">
+          <div className="relative group">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Assigned To (comma-separated)
             </label>
@@ -208,19 +189,12 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
               ref={assignedInputRef}
               type="text"
               value={assignedTo}
-              onChange={(e) => {
-                setAssignedTo(e.target.value)
-                setShowSuggestions(true)
-              }}
-              onFocus={() => setShowSuggestions(true)}
+              onChange={(e) => setAssignedTo(e.target.value)}
               placeholder="Alice, Bob, Charlie"
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
             />
-            {showSuggestions && filteredSuggestions.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto"
-              >
+            {filteredSuggestions.length > 0 && (
+              <div className="hidden group-focus-within:block absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                 {filteredSuggestions.map(p => (
                   <button
                     key={p}
