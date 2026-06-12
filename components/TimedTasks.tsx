@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { memo, useRef, useEffect, useState } from 'react'
 import { Task } from '@/lib/db'
 import { format12h } from '@/lib/time'
 import TaskItem from './TaskItem'
@@ -20,7 +20,7 @@ function getStoredFilter(key: string, defaultValue: FilterMode): FilterMode {
   return defaultValue
 }
 
-export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
+export default memo(function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
   const [filter, setFilter] = useState<FilterMode>(() => getStoredFilter('timed-tasks-filter', 'all'))
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentTime, setCurrentTime] = useState<string>('')
@@ -164,4 +164,4 @@ export default function TimedTasks({ tasks, onTaskMenuOpen }: TimedTasksProps) {
       </div>
     </div>
   )
-}
+})

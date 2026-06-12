@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useSyncExternalStore } from 'react'
-import { Task, TaskRepeatability, TaskCategory, addTask, getTimedTasks, getOneTimeTasks, updateTodo, deleteTodo, updateTaskPriority } from '@/lib/db'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
+import { Task, TaskRepeatability, TaskCategory, addTask, getTaskLists, updateTodo, deleteTodo, updateTaskPriority } from '@/lib/db'
 import { syncTodos, setupAutoSync, pullFromServer } from '@/lib/sync'
 import Clock from './Clock'
 import TimedTasks from './TimedTasks'
@@ -54,12 +54,11 @@ export default function TaskBoard() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  async function reloadTasks() {
-    const timed = await getTimedTasks()
-    const oneTime = await getOneTimeTasks()
+  const reloadTasks = useCallback(async () => {
+    const { timed, oneTime } = await getTaskLists()
     setTimedTasks(timed)
     setOneTimeTasks(oneTime)
-  }
+  }, [])
 
   useEffect(() => {
     async function loadTasks() {
@@ -85,7 +84,7 @@ export default function TaskBoard() {
       loadTasks()
       setupAutoSync()
     }
-  }, [isHydrated])
+  }, [isHydrated, reloadTasks])
 
   // Poll for changes from other devices
   useEffect(() => {
@@ -115,7 +114,7 @@ export default function TaskBoard() {
       window.removeEventListener('focus', poll)
       window.removeEventListener('online', poll)
     }
-  }, [isHydrated])
+  }, [isHydrated, reloadTasks])
 
   function handleAddTask(text: string, repeatability: TaskRepeatability, scheduledTime?: string, category?: TaskCategory, scheduledDate?: string, assignedTo?: string) {
     (async () => {
@@ -124,7 +123,7 @@ export default function TaskBoard() {
 
     if (repeatability === 'never') {
       // Reassign priorities so all incomplete one-time tasks are sequential (1, 2, 3, ...)
-      const allOneTime = await getOneTimeTasks()
+      const allOneTime = (await getTaskLists()).oneTime
       const incomplete = allOneTime
         .filter(t => !t.completed)
         .sort((a, b) => {
@@ -208,10 +207,10 @@ export default function TaskBoard() {
     })()
   }
 
-  function handleReorderTask(taskId: string, direction: 'up' | 'down') {
+  const handleReorderTask = useCallback((taskId: string, direction: 'up' | 'down') => {
     (async () => {
       // Get the current sorted list of incomplete one-time tasks
-      const allOneTime = await getOneTimeTasks()
+      const allOneTime = await getTaskLists().then(r => r.oneTime)
       const incomplete = allOneTime
         .filter(t => !t.completed)
         .sort((a, b) => {
@@ -242,7 +241,7 @@ export default function TaskBoard() {
       await reloadTasks()
       syncTodos()
     })()
-  }
+  }, [reloadTasks])
 
   function handleDeleteTask(taskId: string) {
     (async () => {
@@ -253,14 +252,14 @@ export default function TaskBoard() {
     })()
   }
 
-  function handleTaskMenuOpen(task: Task, buttonElement: HTMLElement) {
+  const handleTaskMenuOpen = useCallback((task: Task, buttonElement: HTMLElement) => {
     const rect = buttonElement.getBoundingClientRect()
     setMenuPosition({
       x: rect.right,
       y: rect.top,
     })
     setMenuOpenTask(task)
-  }
+  }, [])
 
   // Prevent hydration mismatch by showing empty state until hydrated
   if (!isHydrated) {

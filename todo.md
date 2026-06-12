@@ -48,4 +48,6 @@
 
 - the drop down in new task form does not close if the new task form is closed if i reopen the form the drop down remains open
 
+- why is there a refresh button in the leaderboard section
+
 ## pending todo

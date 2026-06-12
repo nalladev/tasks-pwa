@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect } from 'react'
 import { Task } from '@/lib/db'
 import Icon from './Icon'
 
@@ -24,10 +24,6 @@ export default function TaskActionMenu({
   onClose,
 }: TaskActionMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-  const [computedStyle, setComputedStyle] = useState<React.CSSProperties>({
-    top: position.y,
-    left: position.x,
-  })
 
   useLayoutEffect(() => {
     if (!isOpen || !menuRef.current) return
@@ -51,7 +47,8 @@ export default function TaskActionMenu({
     left = Math.max(4, left)
     top = Math.max(4, top)
 
-    setComputedStyle({ top, left })
+    menu.style.top = `${top}px`
+    menu.style.left = `${left}px`
   }, [isOpen, position])
 
   if (!isOpen) return null
@@ -68,7 +65,6 @@ export default function TaskActionMenu({
       <div
         ref={menuRef}
         className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 py-2 min-w-48"
-        style={computedStyle}
       >
         <button
           onClick={() => {

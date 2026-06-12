@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { memo, useState, useMemo } from 'react'
 import { Task } from '@/lib/db'
 import { format12h } from '@/lib/time'
 import TaskItem from './TaskItem'
@@ -70,7 +70,7 @@ function getStoredFilter(key: string, defaultValue: FilterMode): FilterMode {
   return defaultValue
 }
 
-export default function OneTimeTasks({ tasks, onTaskMenuOpen, onReorder }: OneTimeTasksProps) {
+export default memo(function OneTimeTasks({ tasks, onTaskMenuOpen, onReorder }: OneTimeTasksProps) {
   const [filter, setFilter] = useState<FilterMode>(() => getStoredFilter('one-time-tasks-filter', 'all'))
 
   const isCompletedFilter = filter === 'completed'
@@ -366,4 +366,4 @@ export default function OneTimeTasks({ tasks, onTaskMenuOpen, onReorder }: OneTi
       </div>
     </div>
   )
-}
+})

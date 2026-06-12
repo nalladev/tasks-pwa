@@ -100,21 +100,38 @@ export async function getTasks(): Promise<Task[]> {
 }
 
 /**
+ * Efficiently get both timed and one-time task lists in a single IndexedDB read.
+ */
+export async function getTaskLists(): Promise<{ timed: Task[]; oneTime: Task[] }> {
+  const db = await getDB()
+  const allTasks = await db.getAll('tasks')
+  const timed: Task[] = []
+  const oneTime: Task[] = []
+  for (const t of allTasks) {
+    if (t.deletedAt) continue
+    if (t.repeatability === 'never') {
+      oneTime.push(t)
+    } else {
+      timed.push(t)
+    }
+  }
+  return { timed, oneTime }
+}
+
+/**
  * Get timed (repeating) tasks
  */
 export async function getTimedTasks(): Promise<Task[]> {
-  const db = await getDB()
-  const allTasks = await db.getAll('tasks')
-  return allTasks.filter(t => t.repeatability !== 'never' && !t.deletedAt)
+  const { timed } = await getTaskLists()
+  return timed
 }
 
 /**
  * Get one-time tasks
  */
 export async function getOneTimeTasks(): Promise<Task[]> {
-  const db = await getDB()
-  const allTasks = await db.getAll('tasks')
-  return allTasks.filter(t => t.repeatability === 'never' && !t.deletedAt)
+  const { oneTime } = await getTaskLists()
+  return oneTime
 }
 
 /**
