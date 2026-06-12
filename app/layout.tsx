@@ -15,18 +15,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Offline Tasks App",
-  description: "A PWA tasks app that works offline",
+  title: "Tasks Board",
+  description: "A PWA task management app that works offline",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Offline Tasks",
+    title: "Tasks",
   },
+  icons: [
+    { rel: "icon", url: "/icons/icon-192x192.svg", type: "image/svg+xml" },
+    { rel: "apple-touch-icon", url: "/icons/icon-192x192.svg" },
+  ],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3b82f6",
+  themeColor: "#2563eb",
   width: "device-width",
   initialScale: 1,
 };

@@ -141,9 +141,11 @@ export default function RecycleBinPanel({ isOpen, onClose }: RecycleBinPanelProp
       // Remove from IndexedDB first (works offline)
       await hardDeleteTodo(id)
 
-      // Try to delete from Firestore (may fail silently if offline)
+      // Try to delete from Firestore (may fail silently if offline).
+      // This uses the delete-forever endpoint which also records a
+      // deletion tombstone so other devices can sync the removal.
       try {
-        await fetch('/api/tasks/delete', {
+        await fetch('/api/tasks/delete-forever', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id }),

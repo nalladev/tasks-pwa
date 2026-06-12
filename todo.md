@@ -36,6 +36,14 @@
 
 - ~~the coluring of leaderboard shall be goldish, silverish, bronzish then whatever for rest of the ranks~~
 
+- ~~the sizing of leaderboard shall be bigger for higher ranks then smaller for lower ranks~~
+
 ## pending todo
 
-- ~~the sizing of leaderboard shall be bigger for higher ranks then smaller for lower ranks~~
+- Pressing escape should close all of the forms/popups or other screens like settings,leaderboard
+
+- the assignees input with dropdown options do not show option when entering a second assignee after a comma, it only shows the first assignee as an option
+
+- a logo and title to look well when installed as pwa
+
+- i deleted a lot of tasks from the recycle bin from device A then i checked firestore and saw that those tasks are gone as expected then i checked device b and saw that the deleted tasks were still in the recycle bin. so deletion of a firestore document from device a is not syncing with device b

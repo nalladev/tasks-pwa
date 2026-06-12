@@ -45,3 +45,13 @@ export function tasksCollection() {
   const prefix = process.env.NODE_ENV === 'development' ? 'test_' : ''
   return `${prefix}tasks`
 }
+
+/**
+ * Returns the Firestore collection name for deletion tombstones.
+ * These records track permanent hard deletions so other devices
+ * can learn about them during sync.
+ */
+export function deletionsCollection() {
+  const prefix = process.env.NODE_ENV === 'development' ? 'test_' : ''
+  return `${prefix}_deletions`
+}

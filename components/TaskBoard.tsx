@@ -37,6 +37,23 @@ export default function TaskBoard() {
 
   const POLL_INTERVAL = 30000
 
+  // Close all modals/overlays when Escape is pressed
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false)
+        setSelectedTask(null)
+        setIsSettingsOpen(false)
+        setIsLeaderboardOpen(false)
+        setIsRecycleBinOpen(false)
+        setMenuOpenTask(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   async function reloadTasks() {
     const timed = await getTimedTasks()
     const oneTime = await getOneTimeTasks()
