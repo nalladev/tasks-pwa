@@ -3,13 +3,37 @@
 import { useSyncExternalStore } from 'react'
 import Icon from './Icon'
 
+const OFFLINE_DELAY_MS = 2000 // Wait 2s before showing offline banner (avoids flash on unstable connections)
+
 function subscribeToOnlineStatus(onStoreChange: () => void) {
-  window.addEventListener('online', onStoreChange)
-  window.addEventListener('offline', onStoreChange)
+  let offlineTimer: ReturnType<typeof setTimeout> | null = null
+
+  // Debounce offline events: delay notification to React so flaky wifi
+  // that flickers between online/offline doesn't cause a visible flash.
+  // Coming back online is instant — cancels any pending offline timer.
+  const handleOnline = () => {
+    if (offlineTimer) {
+      clearTimeout(offlineTimer)
+      offlineTimer = null
+    }
+    onStoreChange()
+  }
+
+  const handleOffline = () => {
+    if (offlineTimer) clearTimeout(offlineTimer)
+    offlineTimer = setTimeout(() => {
+      offlineTimer = null
+      onStoreChange()
+    }, OFFLINE_DELAY_MS)
+  }
+
+  window.addEventListener('online', handleOnline)
+  window.addEventListener('offline', handleOffline)
 
   return () => {
-    window.removeEventListener('online', onStoreChange)
-    window.removeEventListener('offline', onStoreChange)
+    window.removeEventListener('online', handleOnline)
+    window.removeEventListener('offline', handleOffline)
+    if (offlineTimer) clearTimeout(offlineTimer)
   }
 }
 

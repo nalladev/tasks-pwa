@@ -60,18 +60,18 @@ export default function TaskBoard() {
     setOneTimeTasks(oneTime)
   }, [])
 
+  // Initial load: read from IndexedDB, then pull from server in background
   useEffect(() => {
+    if (!isHydrated) return
+
     async function loadTasks() {
-      // First, load from IndexedDB immediately
       setIsInitialLoad(true)
       try {
         await reloadTasks()
         setIsInitialLoad(false)
-
-        // Then pull from server in background
         setIsSyncing(true)
-        await pullFromServer()
-        await reloadTasks()
+        const changed = await pullFromServer()
+        if (changed) await reloadTasks()
       } catch (error) {
         console.error('Error loading tasks:', error)
       } finally {
@@ -80,13 +80,18 @@ export default function TaskBoard() {
       }
     }
 
-    if (isHydrated) {
-      loadTasks()
-      setupAutoSync()
-    }
+    loadTasks()
   }, [isHydrated, reloadTasks])
 
-  // Poll for changes from other devices
+  // Auto-sync setup: separate effect so cleanup works properly
+  useEffect(() => {
+    if (!isHydrated) return
+    const cleanup = setupAutoSync()
+    return cleanup
+  }, [isHydrated])
+
+  // Poll for changes from other devices (periodic, on focus, on visibility change)
+  // Note: online events are handled by setupAutoSync with debounce
   useEffect(() => {
     if (!isHydrated) return
 
@@ -106,13 +111,11 @@ export default function TaskBoard() {
 
     window.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('focus', poll)
-    window.addEventListener('online', poll)
 
     return () => {
       clearInterval(intervalId)
       window.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('focus', poll)
-      window.removeEventListener('online', poll)
     }
   }, [isHydrated, reloadTasks])
 

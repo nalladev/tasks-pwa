@@ -5,6 +5,7 @@ import { getPendingTasks, markAsSynced, markAsFailed, getDB, hardDeleteTodo, Tas
 const SYNC_INTERVAL = 30000 // 30 seconds
 const MAX_RETRIES = 3
 const RETRY_DELAY = 5000 // 5 seconds
+const ONLINE_DEBOUNCE_MS = 3000 // Wait 3s of stable connection before confirming online
 
 const LAST_PULL_KEY = 'tasks-pwa-last-pull-timestamp'
 
@@ -81,14 +82,24 @@ export async function syncTodos() {
 }
 
 /**
- * Set up automatic sync when online
+ * Set up automatic sync when online.
+ * Returns a cleanup function to remove all listeners and timers.
  */
 export function setupAutoSync() {
-  // Sync when coming online
-  window.addEventListener('online', () => {
-    console.log('[Sync] Back online, syncing...')
-    syncTodos()
-  })
+  let onlineTimeout: ReturnType<typeof setTimeout> | null = null
+
+  // Debounced online handler: wait for stable connection before syncing
+  // (prevents rapid-fire syncs on unstable wifi that flickers online/offline)
+  const handleOnline = () => {
+    if (onlineTimeout) clearTimeout(onlineTimeout)
+    onlineTimeout = setTimeout(async () => {
+      console.log('[Sync] Back online (stable), syncing...')
+      await syncTodos()
+      await pullFromServer()
+    }, ONLINE_DEBOUNCE_MS)
+  }
+
+  window.addEventListener('online', handleOnline)
 
   // Initial sync if online
   if (navigator.onLine) {
@@ -96,11 +107,19 @@ export function setupAutoSync() {
   }
 
   // Periodic sync (even when already online)
-  setInterval(() => {
+  const intervalId = setInterval(() => {
     if (navigator.onLine) {
       syncTodos()
     }
   }, SYNC_INTERVAL)
+
+  // Return cleanup function so React effects can properly tear this down
+  return () => {
+    window.removeEventListener('online', handleOnline)
+    clearInterval(intervalId)
+    if (onlineTimeout) clearTimeout(onlineTimeout)
+    onlineTimeout = null
+  }
 }
 
 /**
@@ -163,7 +182,13 @@ function setLastPullTimestamp(ts: number) {
  */
 export async function pullFromServer(): Promise<boolean> {
   try {
-    const serverTasks = await fetchLatestTasks()
+    // Fetch tasks and deletions in parallel for efficiency
+    const lastPull = getLastPullTimestamp()
+    const [serverTasks, deletions] = await Promise.all([
+      fetchLatestTasks(),
+      fetchDeletions(lastPull > 0 ? lastPull : undefined),
+    ])
+
     let changed = false
     const db = await getDB()
     const tx = db.transaction('tasks', 'readwrite')
@@ -195,9 +220,7 @@ export async function pullFromServer(): Promise<boolean> {
 
     await tx.done
 
-    // Pull deletion tombstones so permanent deletes propagate across devices
-    const lastPull = getLastPullTimestamp()
-    const deletions = await fetchDeletions(lastPull > 0 ? lastPull : undefined)
+    // Process deletion tombstones so permanent deletes propagate across devices
     if (deletions.length > 0) {
       console.log(`[Pull] Processing ${deletions.length} deletion(s) from other devices`)
       for (const deletion of deletions) {
